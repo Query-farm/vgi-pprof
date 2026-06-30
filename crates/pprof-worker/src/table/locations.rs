@@ -17,6 +17,10 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "Locations with their line table (inlined frames).",
     "sql": "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id LIMIT 10"
+  },
+  {
+    "description": "The most heavily inlined locations (longest line table = deepest inlining the compiler folded into one address).",
+    "sql": "SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5"
   }
 ]"#;
 
@@ -87,7 +91,7 @@ impl TableFunction for Locations {
             description: "Decode a pprof profile's location table".into(),
             examples: vec![FunctionExample {
                 sql: "SELECT location_id, address, mapping_id, lines FROM \
-                      pprof.main.locations('cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
+                      pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
                     .into(),
                 description: "Locations with their line table (inlined frames).".into(),
                 expected_output: None,

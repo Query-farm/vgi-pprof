@@ -15,6 +15,10 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "List the functions in a profile.",
     "sql": "SELECT function_id, name, filename, start_line FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id LIMIT 10"
+  },
+  {
+    "description": "Which source files contribute the most symbols (functions) to a profile.",
+    "sql": "SELECT filename, count(*) AS fns FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY filename ORDER BY fns DESC, filename LIMIT 5"
   }
 ]"#;
 
@@ -86,7 +90,7 @@ impl TableFunction for Functions {
             description: "Decode a pprof profile's function table".into(),
             examples: vec![FunctionExample {
                 sql: "SELECT function_id, name, filename, start_line FROM \
-                      pprof.main.functions('cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
+                      pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
                     .into(),
                 description: "List the functions defined in a profile.".into(),
                 expected_output: None,

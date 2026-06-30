@@ -17,6 +17,10 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "The sample types and duration of a profile.",
     "sql": "SELECT sample_types, duration_nanos, default_sample_type FROM pprof.main.meta('data/go_heap.pb.gz') WHERE error IS NULL"
+  },
+  {
+    "description": "The sampling period and what it counts (read this to convert raw counts to time), plus the wall-clock duration covered.",
+    "sql": "SELECT period, period_type, duration_nanos FROM pprof.main.meta('data/go_cpu.pb.gz') WHERE error IS NULL"
   }
 ]"#;
 

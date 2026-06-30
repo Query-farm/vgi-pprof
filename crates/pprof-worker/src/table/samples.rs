@@ -15,6 +15,10 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "Raw samples with their leaf location id.",
     "sql": "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL"
+  },
+  {
+    "description": "Inspect the per-sample labels (e.g. a heap profile's size_class tag) carried alongside the values.",
+    "sql": "SELECT sample_id, labels, value FROM pprof.main.samples('data/alloc.pb.gz') WHERE error IS NULL LIMIT 5"
   }
 ]"#;
 
@@ -82,7 +86,7 @@ impl TableFunction for Samples {
                 .into(),
             examples: vec![FunctionExample {
                 sql: "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
-                      pprof.main.samples('cpu.pb.gz') WHERE error IS NULL;"
+                      pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
                     .into(),
                 description: "Raw samples with their leaf location id.".into(),
                 expected_output: None,

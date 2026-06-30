@@ -107,7 +107,7 @@ impl TableFunction for Stacks {
                 },
                 FunctionExample {
                     sql: "SELECT sample_id, frame[1].function AS leaf, value FROM \
-                          pprof.main.stacks('cpu.pb.gz') WHERE error IS NULL;"
+                          pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL;"
                         .into(),
                     description: "Flatten one profile's stacks (leaf frame + per-type values)."
                         .into(),

@@ -15,6 +15,10 @@ const EXECUTABLE_EXAMPLES: &str = r#"[
   {
     "description": "Mappings with build ids (the addresses that still need symbolizing).",
     "sql": "SELECT mapping_id, filename, build_id FROM pprof.main.mappings('data/native.pb.gz') WHERE error IS NULL AND build_id IS NOT NULL"
+  },
+  {
+    "description": "Every loaded binary/segment in a profile with its address range (memory_start .. memory_limit).",
+    "sql": "SELECT mapping_id, filename, memory_start, memory_limit FROM pprof.main.mappings('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY mapping_id"
   }
 ]"#;
 
