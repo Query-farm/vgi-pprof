@@ -1,0 +1,62 @@
+# name: test/sql/tables.test
+# group: [vgi_pprof]
+#
+# The raw graph views (samples / functions / locations / mappings) and the
+# id-passthrough that lets them join back together (and lets build_id flow on to
+# vgi-symbols).
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+# functions table: the Go CPU profile defines four functions.
+query I
+SELECT count(*) FROM functions('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL;
+----
+4
+
+# Id passthrough: symbolize the busy sample by joining samples -> locations ->
+# functions on the profile's own ids (no renumbering).
+query T
+SELECT f.name
+FROM samples('${VGI_PPROF_DATA}/go_cpu.pb.gz') s,
+     locations('${VGI_PPROF_DATA}/go_cpu.pb.gz') l,
+     functions('${VGI_PPROF_DATA}/go_cpu.pb.gz') f
+WHERE s.error IS NULL AND l.error IS NULL AND f.error IS NULL
+  AND s.location_ids[1] = l.location_id
+  AND l.lines[1].function_id = f.function_id
+  AND s.value[2] = 30000000;
+----
+main.hotLoop
+
+# mappings: an unsymbolized native profile carries build ids verbatim
+# (these feed vgi-symbols for addr->symbol resolution).
+query T
+SELECT build_id FROM mappings('${VGI_PPROF_DATA}/native.pb.gz')
+WHERE error IS NULL AND build_id IS NOT NULL ORDER BY build_id;
+----
+a1b2c3d4e5f6
+deadbeefcafe
+
+# locations of the native profile are address-only (no line table).
+query I
+SELECT count(*) FROM locations('${VGI_PPROF_DATA}/native.pb.gz')
+WHERE error IS NULL AND len(lines) = 0;
+----
+3
+
+# samples expose location ids leaf-first; the leaf joins to locations.
+query I
+SELECT s.location_ids[1]
+FROM samples('${VGI_PPROF_DATA}/go_heap.pb.gz') s WHERE s.error IS NULL;
+----
+2

@@ -1,0 +1,76 @@
+# name: test/sql/stacks.test
+# group: [vgi_pprof]
+#
+# The headline pprof.stacks view: per-value-type values + pre-resolved frames,
+# so a flamegraph rollup is a GROUP BY frame ... SUM(value) with no join. The
+# fixtures are produced by data/generate_fixtures.go (real google/pprof bytes).
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+# Top self-time (leaf) functions across a Go CPU profile. value[2] is the
+# cpu/nanoseconds slot (value[1] is samples/count) — see pprof.meta.
+query TI
+SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns
+FROM stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz') s
+WHERE s.error IS NULL
+GROUP BY 1 ORDER BY 2 DESC;
+----
+main.hotLoop	30000000
+main.parse	5000000
+
+# The busy stack is hotLoop <- work <- main: 3 frames, leaf first.
+query I
+SELECT len(frame) FROM stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz')
+WHERE error IS NULL AND value[2] = 30000000;
+----
+3
+
+query TTT
+SELECT frame[1].function, frame[2].function, frame[3].function
+FROM stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz')
+WHERE error IS NULL AND value[2] = 30000000;
+----
+main.hotLoop	main.work	main.main
+
+# Every sample's value list is aligned to the two sample types.
+query I
+SELECT DISTINCT len(value) FROM stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL;
+----
+2
+
+# Heap profile: inlined frames are expanded in place (makeBuf inlined into
+# allocate), and value carries all four heap value types.
+query TT
+SELECT frame[1].function, frame[2].function
+FROM stacks('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL;
+----
+main.makeBuf	main.allocate
+
+query I
+SELECT len(value) FROM stacks('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL;
+----
+4
+
+# A multi-value alloc profile carries a sample label, surfaced as a MAP.
+query T
+SELECT labels['size_class'] FROM stacks('${VGI_PPROF_DATA}/alloc.pb.gz') WHERE error IS NULL;
+----
+4096
+
+# Unsymbolized native frames: function is NULL but the address is preserved.
+query I
+SELECT count(*) FROM stacks('${VGI_PPROF_DATA}/native.pb.gz') s, UNNEST(s.frame) AS t(fr)
+WHERE s.error IS NULL AND fr.function IS NULL AND fr.address <> 0;
+----
+4

@@ -1,0 +1,23 @@
+# vgi-lint-check configuration for the vgi-pprof worker.
+#
+# Every table function decodes a profile read from a `src` FILE (or glob, or
+# inline BLOB). The lint sandbox attaches only the worker with no fixtures on
+# disk, so the example-EXECUTION rules (VGI901/902/906/907) — which actually run
+# each example query and expect rows back — cannot materialize there. The same
+# example queries ARE executed for real by the haybarn SQLLogic E2E
+# (test/sql/*.test), which loads `vgi`, attaches the worker, and runs them
+# against the committed fixtures on every transport.
+#
+# All STATIC metadata rules still gate at `info`: catalog `source_url`, the
+# classifying schema tags (domain/category/topic), titles, doc_llm/doc_md,
+# keywords, per-argument docs, per-column comments, example_queries,
+# result_columns_md, and the executable_examples payload are emitted from the
+# worker's catalog + FunctionMetadata (crates/pprof-worker/src/**) and read by
+# the linter over VGI.
+[tool.vgi-lint-check]
+select = ["ALL"]
+ignore = ["VGI901", "VGI902", "VGI906", "VGI907"]
+fail_on = "info"
+
+[tool.vgi-lint-check.options]
+column_comment_min_ratio = 0.8

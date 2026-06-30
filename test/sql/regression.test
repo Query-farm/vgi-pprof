@@ -1,0 +1,35 @@
+# name: test/sql/regression.test
+# group: [vgi_pprof]
+#
+# The headline use case: diff two CPU profiles (a baseline build vs a candidate)
+# to find the function that regressed. go_cpu2 is go_cpu with hotLoop made 3x
+# heavier, so the diff must attribute +60,000,000 cpu ns to main.hotLoop.
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+query TI
+WITH base AS (
+  SELECT frame[1].function AS fn, sum(value[2]) AS ns
+  FROM stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1
+),
+cand AS (
+  SELECT frame[1].function AS fn, sum(value[2]) AS ns
+  FROM stacks('${VGI_PPROF_DATA}/go_cpu2.pb.gz') WHERE error IS NULL GROUP BY 1
+)
+SELECT cand.fn AS fn, cand.ns - COALESCE(base.ns, 0) AS delta
+FROM cand LEFT JOIN base USING (fn)
+ORDER BY delta DESC, fn;
+----
+main.hotLoop	60000000
+main.parse	0

@@ -1,0 +1,24 @@
+[package]
+name = "pprof-worker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "VGI worker that decodes pprof (profile.proto) profiles into SQL rows for bulk profile diffing in DuckDB over Apache Arrow"
+
+[[bin]]
+name = "pprof-worker"
+path = "src/main.rs"
+
+[dependencies]
+pprof-core = { path = "../pprof-core" }
+vgi.workspace = true
+vgi-rpc.workspace = true
+arrow-array.workspace = true
+arrow-buffer.workspace = true
+arrow-schema.workspace = true
+glob = "0.3"
+log = "0.4"
+env_logger = "0.11"

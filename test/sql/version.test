@@ -1,0 +1,40 @@
+# name: test/sql/version.test
+# group: [vgi_pprof]
+#
+# The version scalar, and the BLOB arg-overload: a profile passed as inline bytes
+# decodes the same as a path (here a base64 literal of data/go_cpu.pb.gz, so the
+# test needs no fixture file).
+
+require-env VGI_PPROF_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+query T
+SELECT pprof_version();
+----
+0.1.0
+
+# BLOB overload: the Go CPU profile passed as inline bytes yields the same two
+# samples as the path form; `file` is NULL for BLOB input.
+query II
+SELECT count(*), count(*) FILTER (WHERE file IS NULL)
+FROM stacks(from_base64('H4sIAAAAAAAA/yzQPU7rQBAH8Lcfjidr63kUIbAokOXKchFLW3EECgpqKoyJQkTiXWUT0U7HBRAtCCGgocgN0nMFKigouATaFc1/Zn4z1SgJDLmSIFCOUiUEZ3iAdPPyf5SA30W4vdvwfQSGRMRzoi2vokNWZsCQ5fRAvPR3aZkB9/AYgONumYHw8BRAYF1mID08B5AY1woYDvJBEVeqVsARciiG1U6tQKDKVTGsqlqBxCRPirSK9D8du3Zh5xOno86s+5UWnV3rpG974yad6S+cHjVrt2zmpmvnzfmsb1pr9XDRzvqxDx2Hdmr+7Nosr3Ts01sa7NKsjo2xWoXJtks30RDKeGqOiF43X/ff73sndPvzIU7D687o7VNa8RsAAP//CRIJN04BAAA='))
+WHERE error IS NULL;
+----
+2	2
+
+# The headline rollup works identically on inline bytes.
+query TI
+SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns
+FROM stacks(from_base64('H4sIAAAAAAAA/yzQPU7rQBAH8Lcfjidr63kUIbAokOXKchFLW3EECgpqKoyJQkTiXWUT0U7HBRAtCCGgocgN0nMFKigouATaFc1/Zn4z1SgJDLmSIFCOUiUEZ3iAdPPyf5SA30W4vdvwfQSGRMRzoi2vokNWZsCQ5fRAvPR3aZkB9/AYgONumYHw8BRAYF1mID08B5AY1woYDvJBEVeqVsARciiG1U6tQKDKVTGsqlqBxCRPirSK9D8du3Zh5xOno86s+5UWnV3rpG974yad6S+cHjVrt2zmpmvnzfmsb1pr9XDRzvqxDx2Hdmr+7Nosr3Ts01sa7NKsjo2xWoXJtks30RDKeGqOiF43X/ff73sndPvzIU7D687o7VNa8RsAAP//CRIJN04BAAA=')) s
+WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC;
+----
+main.hotLoop	30000000
+main.parse	5000000

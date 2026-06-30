@@ -1,0 +1,54 @@
+# name: test/sql/meta.test
+# group: [vgi_pprof]
+#
+# pprof.meta: one metadata row per profile describing the sample value types
+# (which name the `value` slots), the sampling period, and duration.
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+# value[2] in a Go CPU profile is cpu/nanoseconds.
+query TT
+SELECT sample_types[2].type, sample_types[2].unit
+FROM meta('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL;
+----
+cpu	nanoseconds
+
+query TT
+SELECT period_type.type, period_type.unit
+FROM meta('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL;
+----
+cpu	nanoseconds
+
+query I
+SELECT period FROM meta('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL;
+----
+10000000
+
+# A Go heap profile is multi-value (four sample types) with a default of inuse_space.
+query I
+SELECT len(sample_types) FROM meta('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL;
+----
+4
+
+query T
+SELECT default_sample_type FROM meta('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL;
+----
+inuse_space
+
+# The multi-value alloc profile aligns to [alloc_objects, alloc_space].
+query TT
+SELECT sample_types[1].type, sample_types[2].type
+FROM meta('${VGI_PPROF_DATA}/alloc.pb.gz') WHERE error IS NULL;
+----
+alloc_objects	alloc_space

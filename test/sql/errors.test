@@ -1,0 +1,60 @@
+# name: test/sql/errors.test
+# group: [vgi_pprof]
+#
+# Per-file error capture: a missing, zero-byte, or malformed profile yields a
+# single error row (every data column NULL, `file` + `error` set) rather than
+# aborting the scan — so one bad file in a glob never fails the others.
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+statement ok
+SET search_path = 'pprof.main';
+
+# A missing file produces one error row with the data columns NULL.
+query II
+SELECT count(*), count(*) FILTER (WHERE sample_id IS NULL AND error IS NOT NULL)
+FROM stacks('${VGI_PPROF_DATA}/does_not_exist.pb.gz');
+----
+1	1
+
+# A zero-byte profile is captured as an error row, not a panic.
+query I
+SELECT count(*) FROM meta('${VGI_PPROF_DATA}/empty.pb.gz') WHERE error IS NOT NULL;
+----
+1
+
+# A malformed (non-proto) profile is captured too.
+query I
+SELECT count(*) FROM stacks('${VGI_PPROF_DATA}/bad.pb.gz')
+WHERE error IS NOT NULL AND sample_id IS NULL;
+----
+1
+
+# A glob mixing good and bad files: the two bad fixtures (empty.pb.gz, bad.pb.gz)
+# each yield one error row; the five valid profiles each yield a meta row. The
+# scan does NOT abort.
+query I
+SELECT count(*) FROM meta('${VGI_PPROF_DATA}/*.pb.gz') WHERE error IS NOT NULL;
+----
+2
+
+query I
+SELECT count(*) FROM meta('${VGI_PPROF_DATA}/*.pb.gz')
+WHERE error IS NULL AND len(sample_types) > 0;
+----
+5
+
+# The `file` column is always populated for an error row so the bad file is named.
+query I
+SELECT count(*) FROM meta('${VGI_PPROF_DATA}/*.pb.gz')
+WHERE error IS NOT NULL AND file IS NOT NULL;
+----
+2
