@@ -130,7 +130,7 @@ jobs:
     name: metadata quality (vgi-lint)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -154,7 +154,7 @@ jobs:
     name: MSRV check (rust 1.90)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain (pinned MSRV)
         uses: dtolnay/rust-toolchain@1.90
@@ -173,7 +173,7 @@ jobs:
     name: supply-chain audit (cargo-audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: cargo audit
         uses: rustsec/audit-check@v2
