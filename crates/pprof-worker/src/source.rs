@@ -166,10 +166,10 @@ pub fn src_arg_spec() -> vgi::ArgSpec {
         "src",
         0,
         "any",
-        "The profile source: a VARCHAR path to a pprof file (gzip-wrapped or raw \
-         `profile.proto`), which may be a glob like '/profiles/*.pb.gz' (matches are read in \
-         sorted order); a LIST(VARCHAR) of paths/globs; or a BLOB of profile bytes read inline. \
-         Each file is decoded independently — a missing, empty, or malformed profile yields one \
-         error row (data columns NULL, `file` set, `error` set) rather than failing the scan.",
+        "Where to read the pprof profile(s) from: a single file path (gzip-wrapped or raw \
+         `profile.proto`), a glob like '/profiles/*.pb.gz' whose matches are read in sorted order, \
+         a list of such paths/globs to scan together, or the profile bytes supplied inline. Each \
+         file is decoded independently — a missing, empty, or malformed profile yields one error \
+         row (data columns NULL, `file` set, `error` set) rather than failing the scan.",
     )
 }

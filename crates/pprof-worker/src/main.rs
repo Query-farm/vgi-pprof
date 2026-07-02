@@ -65,46 +65,50 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
             (
                 "vgi.doc_llm".to_string(),
-                "Decode pprof profiles (the gzip-wrapped profile.proto emitted by Go, gperftools, \
-                 Parca, Pyroscope, py-spy, …) into SQL rows so you can bulk-diff profiles and gate \
-                 CI on performance regressions. `pprof.stacks(src)` is the headline view: one row \
-                 per sample with a LIST(BIGINT) `value` aligned to the sample types, a MAP `labels`, \
-                 and a leaf-first LIST(STRUCT(function, filename, line, address)) `frame`, so a \
-                 flamegraph diff is GROUP BY frame … SUM(value) with no join. `pprof.samples`, \
-                 `pprof.functions`, `pprof.locations`, and `pprof.mappings` expose the raw graph \
-                 (ids passed through verbatim so they join), and `pprof.meta` returns one row of \
-                 sample types / period / duration. `src` overloads on a VARCHAR path (which may \
-                 glob), a LIST(VARCHAR) of paths, or a BLOB of profile bytes; each file is decoded \
-                 independently and a malformed/zero-byte profile yields one error row (data columns \
-                 NULL, file + error set) instead of aborting. `pprof.mappings.build_id` is emitted \
-                 verbatim so unresolved native frames flow to vgi-symbols for symbolization."
+                "Decode pprof profiles — the gzip-wrapped profile.proto emitted by Go, gperftools, \
+                 Parca, Pyroscope, and py-spy — into SQL rows over Arrow so you can bulk-diff many \
+                 profiles at once and gate CI on performance regressions, which the interactive, \
+                 single-file `go tool pprof` can't do. The headline is a flattened, flamegraph-ready \
+                 view: one row per sample carrying its per-type measured values (a list of BIGINTs \
+                 aligned to the profile's sample value types), its labels as a MAP, and its call \
+                 stack pre-resolved leaf-first as a list of frame structs (inlined frames expanded, \
+                 unsymbolized frames keeping their raw address) — so a flamegraph diff becomes a \
+                 GROUP BY over frames with a SUM and no manual join. The underlying protobuf graph \
+                 is also exposed with the profile's original ids passed through verbatim so rows \
+                 join cleanly, plus a one-row profile summary (sample value types, sampling period, \
+                 duration). Build ids are emitted verbatim so the addresses of unsymbolized native \
+                 frames can be resolved downstream by a symbolizer. Reach for this whenever you \
+                 need to compare, aggregate, or regression-gate profiles across a fleet, a deploy, \
+                 or a CI run rather than eyeballing one at a time. Each source is decoded \
+                 independently — a path (which may be a glob), a list of paths, or inline profile \
+                 bytes — and a missing, empty, or malformed profile becomes one error row (data \
+                 columns NULL) instead of aborting the scan."
                     .to_string(),
             ),
             (
                 "vgi.doc_md".to_string(),
                 "# pprof\n\nDecode **pprof** profiles — the gzip-wrapped `profile.proto` produced \
                  by Go, gperftools, Parca, Pyroscope, py-spy, and friends — into rows so SRE and \
-                 performance teams can **bulk-diff profiles in SQL** and wire CI \
+                 performance teams can **bulk-diff profiles in SQL** and wire up CI \
                  performance-regression gates. `go tool pprof` is interactive and single-file; this \
-                 worker lets you load hundreds of profiles and ask \"which function regressed across \
-                 this deploy?\"\n\nThe headline view is **`pprof.stacks(src)`**: one row per sample \
-                 with the call stack pre-resolved — `value` (a `LIST(BIGINT)` aligned to the \
-                 profile's sample types), `labels` (a `MAP`), and `frame` (a leaf-first \
-                 `LIST(STRUCT(function, filename, line, address))`, inlined frames expanded, \
-                 unsymbolized frames keeping their address). A flamegraph diff is then just \
-                 `GROUP BY frame … SUM(value)` with no manual join.\n\nThe raw protobuf graph is \
-                 also exposed for joins: `pprof.samples` (location ids + values + labels), \
-                 `pprof.functions`, `pprof.locations` (line table), and `pprof.mappings` (loaded \
-                 binaries with `build_id`), all emitting the profile's original ids verbatim. \
-                 `pprof.meta` returns a single row describing the sample value types, sampling \
-                 period, and duration.\n\nThe `src` argument overloads on a **path** (which may be \
-                 a glob like `/profiles/*.pb.gz`), a **LIST(VARCHAR)** of paths, or a **BLOB** of \
-                 profile bytes. Each file is decoded independently, so a malformed or zero-byte \
-                 profile produces a single **error row** (every data column NULL, `file` and \
-                 `error` set) rather than failing the whole scan. A mapping's `build_id` is passed \
-                 through verbatim so the addresses of unsymbolized native frames can be symbolized \
-                 downstream by `vgi-symbols`.\n\n**Scalars:** `pprof_version`. **Table functions:** \
-                 `stacks`, `samples`, `functions`, `locations`, `mappings`, `meta`."
+                 worker lets you load hundreds of profiles at once and ask \"which function \
+                 regressed across this deploy?\"\n\nThe headline is a **flattened, flamegraph-ready \
+                 view**: one row per sample with its call stack already resolved — the per-type \
+                 measured values (a `BIGINT[]` aligned to the profile's sample value types), the \
+                 sample labels as a `MAP`, and the call stack as a leaf-first list of `(function, \
+                 filename, line, address)` frames, with inlined frames expanded and unsymbolized \
+                 frames keeping their raw address. A flamegraph diff across many profiles then \
+                 needs no manual join.\n\nThe underlying `profile.proto` graph is also exposed for \
+                 ad-hoc joins, with the profile's original ids passed through verbatim, alongside a \
+                 one-row profile summary (sample value types, sampling period, duration). A loaded \
+                 binary's build id is emitted verbatim so the addresses of unsymbolized native \
+                 frames can be resolved by a downstream symbolizer.\n\nReach for this worker \
+                 whenever you need to **compare or aggregate profiles at scale** — across a fleet, \
+                 a deploy, or a CI run — rather than inspecting one at a time. Each source is \
+                 decoded independently — a **path** (which may be a glob like \
+                 `/profiles/*.pb.gz`), a **list of paths**, or **inline profile bytes** — so a \
+                 malformed or zero-byte profile produces a single **error row** (every data column \
+                 NULL) rather than failing the whole scan."
                     .to_string(),
             ),
             // Fixed agent-suitability suite run by `vgi-lint simulate`. The
@@ -191,8 +195,8 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
-                "pprof profile decoding functions: stacks, samples, functions, locations, \
-                 mappings, meta."
+                "Decode pprof profiles into SQL rows: flattened flamegraph-ready stacks, the raw \
+                 profile.proto graph, and profile metadata."
                     .to_string(),
             ),
             tags: vec![
@@ -208,25 +212,50 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 ("domain".to_string(), "observability".to_string()),
                 ("category".to_string(), "profiling".to_string()),
                 ("topic".to_string(), "pprof-profiles".to_string()),
+                // VGI413/408-412 navigation registry: an ordered list of the
+                // sections objects are grouped under. Each object carries a
+                // matching `vgi.category` (see crate::meta::object_tags).
+                (
+                    "vgi.categories".to_string(),
+                    "[\
+                     {\"name\":\"Flattened stacks\",\"description\":\"The headline view: \
+                     flamegraph-ready rows with each sample's call stack pre-resolved, for \
+                     diffing profiles in SQL without a manual join.\"},\
+                     {\"name\":\"Raw profile graph\",\"description\":\"The raw profile.proto graph \
+                     — samples and the location, function, and mapping tables they reference — with \
+                     original ids passed through verbatim for ad-hoc joins.\"},\
+                     {\"name\":\"Profile metadata\",\"description\":\"Profile-level summary and \
+                     worker introspection: the sample value types, sampling period and duration, \
+                     and the running worker version.\"}\
+                     ]"
+                        .to_string(),
+                ),
                 (
                     "vgi.doc_llm".to_string(),
-                    "Functions to decode a pprof profile into rows: `stacks` (flattened, \
-                     flamegraph-ready samples — the headline view), `samples` (raw samples), \
-                     `functions`, `locations`, and `mappings` (the protobuf graph with ids passed \
-                     through verbatim for joins), and `meta` (one row of sample types, period, and \
-                     duration). The `src` argument is a path, a glob, a LIST(VARCHAR), or a BLOB; a \
-                     bad file becomes one error row."
+                    "Decode a pprof profile into SQL rows. The headline is a flattened, \
+                     flamegraph-ready view — one row per sample with its per-type values (a list of \
+                     BIGINTs aligned to the profile's sample value types), its labels as a MAP, and \
+                     its call stack pre-resolved leaf-first as frame structs — so a flamegraph diff \
+                     is a GROUP BY over frames with a SUM and no join. The underlying protobuf graph \
+                     is also exposed for ad-hoc joins with the profile's original ids passed \
+                     through verbatim, alongside a one-row summary of the sample value types, \
+                     sampling period, and duration. The profile source is a path, a glob, a list of \
+                     paths, or inline bytes; a bad file becomes one error row rather than aborting \
+                     the scan."
                         .to_string(),
                 ),
                 (
                     "vgi.doc_md".to_string(),
-                    "The single schema for the `pprof` worker — the catalog name matches the \
-                     `ATTACH` name, so qualify calls as `pprof.main.<fn>(...)`. It holds the six \
-                     pprof table functions — `stacks` (the headline flattened-stack view), \
-                     `samples`, `functions`, `locations`, `mappings`, and `meta` — plus the \
-                     `pprof_version` scalar. Every table takes an overloaded `src` (path / glob / \
-                     LIST(VARCHAR) / BLOB) and appends `file` and `error` columns for per-file \
-                     provenance and error capture."
+                    "## pprof · main\n\nThe single schema for the `pprof` worker — the catalog \
+                     name matches the `ATTACH` name, so calls qualify as \
+                     `pprof.main.<fn>(...)`.\n\nIt decodes a pprof profile into SQL rows across \
+                     three groups: a flattened, flamegraph-ready view of samples with their call \
+                     stacks pre-resolved (the headline), the raw `profile.proto` graph for ad-hoc \
+                     joins, and a one-row profile summary of the sample value types, sampling \
+                     period, and duration.\n\nEvery table takes the same overloaded profile \
+                     source — a path, a glob, a list of paths, or inline bytes — and appends \
+                     `file` and `error` columns for per-file provenance and error capture, so a \
+                     bad file in a glob becomes one error row instead of aborting the scan."
                         .to_string(),
                 ),
                 // VGI506 representative example queries for the schema.

@@ -81,6 +81,7 @@ impl TableFunction for Mappings {
              `filename`, `build_id`. `build_id` feeds a downstream symbolizer.",
             "pprof, mappings, mapping table, build id, build_id, memory range, file offset, \
              binary, library, vdso, symbolization, vgi-symbols",
+            "Raw profile graph",
         );
         tags.push((
             "vgi.result_columns_md".into(),

@@ -85,6 +85,7 @@ impl TableFunction for MetaTable {
              `default_sample_type`. `sample_types` names the `value` slots.",
             "pprof, meta, metadata, sample types, sample_type, period, period type, duration, \
              time, default sample type, value types, profiling",
+            "Profile metadata",
         );
         tags.push((
             "vgi.result_columns_md".into(),

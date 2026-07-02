@@ -78,6 +78,7 @@ impl TableFunction for Stacks {
              in SQL.",
             "pprof, stacks, flamegraph, stack trace, profile diff, regression, self time, cpu, \
              flatten, frames, leaf, samples, profiling",
+            "Flattened stacks",
         );
         tags.push((
             "vgi.result_columns_md".into(),

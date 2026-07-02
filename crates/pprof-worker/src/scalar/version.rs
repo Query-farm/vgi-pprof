@@ -32,6 +32,7 @@ impl ScalarFunction for PprofVersion {
                  diagnostics and confirming which build is attached.",
                 "Return the pprof worker version string, e.g. `pprof_version()` → '0.1.0'.",
                 "version, build version, pprof_version, diagnostics, worker version, semver",
+                "Profile metadata",
             ),
             ..Default::default()
         }

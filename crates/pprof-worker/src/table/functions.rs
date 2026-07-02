@@ -71,6 +71,7 @@ impl TableFunction for Functions {
              `function_id` to `locations.lines[].function_id`.",
             "pprof, functions, function table, symbol, name, mangled, system name, filename, \
              start line, symbolization, join",
+            "Raw profile graph",
         );
         tags.push((
             "vgi.result_columns_md".into(),

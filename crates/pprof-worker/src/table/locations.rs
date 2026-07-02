@@ -73,6 +73,7 @@ impl TableFunction for Locations {
              to `functions`.",
             "pprof, locations, location table, address, mapping id, line table, inlined frames, \
              function id, symbolization, join",
+            "Raw profile graph",
         );
         tags.push((
             "vgi.result_columns_md".into(),

@@ -53,18 +53,23 @@ pub fn agent_test_tasks_json(tasks: &[(&str, &str, &str)]) -> String {
     format!("[{}]", items.join(","))
 }
 
-/// Build the four standard per-object discovery/description tags
-/// (`vgi.title`, `vgi.doc_llm`, `vgi.doc_md`, `vgi.keywords`).
+/// Build the standard per-object discovery/description tags
+/// (`vgi.title`, `vgi.doc_llm`, `vgi.doc_md`, `vgi.keywords`) plus the object's
+/// primary `vgi.category` — the name of one of the categories declared in the
+/// schema's `vgi.categories` registry (VGI409/VGI411), which drives navigation,
+/// listing sections, and SEO descriptions.
 pub fn object_tags(
     title: &str,
     description_llm: &str,
     description_md: &str,
     keywords: &str,
+    category: &str,
 ) -> Vec<(String, String)> {
     vec![
         ("vgi.title".to_string(), title.to_string()),
         ("vgi.doc_llm".to_string(), description_llm.to_string()),
         ("vgi.doc_md".to_string(), description_md.to_string()),
         ("vgi.keywords".to_string(), keywords_json(keywords)),
+        ("vgi.category".to_string(), category.to_string()),
     ]
 }

@@ -67,6 +67,7 @@ impl TableFunction for Samples {
              (BIGINT[]), and `labels` (MAP). Join `location_ids` to `locations`, or use `stacks` \
              for resolved frames.",
             "pprof, samples, raw samples, location ids, values, labels, stack, profiling, join",
+            "Raw profile graph",
         );
         tags.push((
             "vgi.result_columns_md".into(),
