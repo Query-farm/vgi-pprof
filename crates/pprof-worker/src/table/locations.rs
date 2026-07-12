@@ -75,17 +75,35 @@ impl TableFunction for Locations {
              function id, symbolization, join",
             "Raw profile graph",
         );
+        let mut cols = vec![
+            (
+                "location_id",
+                "UBIGINT",
+                "The location's unique id within the profile (verbatim); referenced by \
+                 pprof.samples.location_ids.",
+            ),
+            (
+                "address",
+                "UBIGINT",
+                "Instruction address for this location (0 if unavailable); within its mapping's \
+                 memory range.",
+            ),
+            (
+                "mapping_id",
+                "UBIGINT",
+                "Id of the pprof.mappings row this location belongs to (0 if unknown).",
+            ),
+            (
+                "lines",
+                "STRUCT(function_id UBIGINT, line BIGINT)[]",
+                "The line table, innermost inlined frame first; function_id joins to \
+                 pprof.functions.function_id. Empty for an unsymbolized location.",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `location_id` | UBIGINT | Location id (verbatim). |\n\
-             | `address` | UBIGINT | Instruction address. |\n\
-             | `mapping_id` | UBIGINT | Owning mapping id. |\n\
-             | `lines` | STRUCT(function_id UBIGINT, line BIGINT)[] | Line table, innermost first. |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {

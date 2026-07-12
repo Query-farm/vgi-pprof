@@ -69,17 +69,33 @@ impl TableFunction for Samples {
             "pprof, samples, raw samples, location ids, values, labels, stack, profiling, join",
             "Raw profile graph",
         );
+        let mut cols = vec![
+            (
+                "sample_id",
+                "BIGINT",
+                "1-based index of the sample within its profile; joins to pprof.stacks.sample_id.",
+            ),
+            (
+                "location_ids",
+                "UBIGINT[]",
+                "The sample's location ids, leaf first; each joins to \
+                 pprof.locations.location_id.",
+            ),
+            (
+                "value",
+                "BIGINT[]",
+                "The sample's measured values, one BIGINT per meta.sample_types entry, in order.",
+            ),
+            (
+                "labels",
+                "MAP(VARCHAR, VARCHAR)",
+                "Sample labels; duplicate keys are de-duplicated (first wins).",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `sample_id` | BIGINT | 1-based sample index. |\n\
-             | `location_ids` | UBIGINT[] | Location ids, leaf first. |\n\
-             | `value` | BIGINT[] | Values aligned to `meta.sample_types`. |\n\
-             | `labels` | MAP(VARCHAR,VARCHAR) | Sample labels. |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {

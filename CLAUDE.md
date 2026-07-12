@@ -19,14 +19,14 @@ things.
 ## Layout
 
 ```
-Cargo.toml                          workspace; pins vgi = "0.9.5", arrow 59, prost 0.14
+Cargo.toml                          workspace; pins vgi = "0.18.0" (→ vgi-rpc 0.11, arrow 59), prost 0.14
 crates/pprof-core/                  PURE decode/flatten engine (no Arrow/VGI)
   proto/profile.proto               VENDORED Google pprof schema (Apache-2.0)
   build.rs                          prost-build codegen; protoc via protoc-bin-vendored (hermetic)
   src/lib.rs                        gunzip + prost decode + flatten into row structs + unit tests
   tests/golden.rs                   golden fixtures (one per producer) + proptest no-panic fuzzing
 crates/pprof-worker/
-  src/main.rs                       Worker::new(); registers tables + scalar; catalog metadata
+  src/main.rs                       Worker::new(); registers tables + scalar; catalog metadata + the VALUES-backed sample_type_guide view
   src/source.rs                     resolve overloaded `src` (path/glob/list/BLOB) + per-file error capture
   src/arrow_build.rs                row structs -> Arrow columns (LIST/STRUCT/MAP type defs shared with on_bind)
   src/table/{stacks,samples,functions,locations,mappings,meta,mod}.rs   thin table-fn adapters

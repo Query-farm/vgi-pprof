@@ -80,37 +80,57 @@ impl TableFunction for Stacks {
              flatten, frames, leaf, samples, profiling",
             "Flattened stacks",
         );
+        let mut cols = vec![
+            (
+                "sample_id",
+                "BIGINT",
+                "1-based index of the sample within its profile; joins to pprof.samples.sample_id.",
+            ),
+            (
+                "value",
+                "BIGINT[]",
+                "The sample's measured values, one BIGINT per meta.sample_types entry, in that \
+                 order (e.g. value[2] is cpu/nanoseconds for a Go CPU profile).",
+            ),
+            (
+                "labels",
+                "MAP(VARCHAR, VARCHAR)",
+                "Sample labels; duplicate keys are de-duplicated (first wins).",
+            ),
+            (
+                "frame",
+                "STRUCT(function VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[]",
+                "The call stack, leaf first; inlined frames expanded, unsymbolized frames keep \
+                 their address. frame[1] is the leaf (self) frame.",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `sample_id` | BIGINT | 1-based sample index (joins to `samples`). |\n\
-             | `value` | BIGINT[] | One value per `meta.sample_types`, same order. |\n\
-             | `labels` | MAP(VARCHAR,VARCHAR) | Sample labels. |\n\
-             | `frame` | STRUCT(function VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[] | \
-             Call stack, leaf first. |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error (row is an error row). |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {
             description: "Flatten a pprof profile into flamegraph-ready stack rows".into(),
             examples: vec![
                 FunctionExample {
-                    sql: "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM \
-                          glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error \
-                          IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
-                        .into(),
-                    description: "Top self-time functions across a directory of CPU profiles."
+                    sql: format!(
+                        "SELECT sample_id, frame[1].function AS leaf, value \
+                         FROM pprof.main.stacks(from_base64('{}')) WHERE error IS NULL;",
+                        crate::meta::GO_CPU_B64
+                    ),
+                    description: "Flatten a profile passed inline as BLOB bytes (self-contained): \
+                                  each sample's leaf frame and per-type values."
                         .into(),
                     expected_output: None,
                 },
                 FunctionExample {
-                    sql: "SELECT sample_id, frame[1].function AS leaf, value FROM \
-                          pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL;"
+                    sql: "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM \
+                          pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL \
+                          GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
                         .into(),
-                    description: "Flatten one profile's stacks (leaf frame + per-type values)."
+                    description: "Top self-time functions in a CPU profile (value[2] = \
+                                  cpu/nanoseconds), read from a file path."
                         .into(),
                     expected_output: None,
                 },

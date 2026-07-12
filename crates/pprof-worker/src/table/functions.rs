@@ -73,18 +73,38 @@ impl TableFunction for Functions {
              start line, symbolization, join",
             "Raw profile graph",
         );
+        let mut cols = vec![
+            (
+                "function_id",
+                "UBIGINT",
+                "The function's unique id within the profile (verbatim); referenced by \
+                 pprof.locations.lines[].function_id.",
+            ),
+            (
+                "name",
+                "VARCHAR",
+                "Human-readable function name, or NULL if unset.",
+            ),
+            (
+                "system_name",
+                "VARCHAR",
+                "System/mangled function name (e.g. the C++ mangled symbol), or NULL if unset.",
+            ),
+            (
+                "filename",
+                "VARCHAR",
+                "Source file that contains the function, or NULL if unset.",
+            ),
+            (
+                "start_line",
+                "BIGINT",
+                "First source line of the function (0 if unknown).",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `function_id` | UBIGINT | Function id (verbatim). |\n\
-             | `name` | VARCHAR | Human-readable name. |\n\
-             | `system_name` | VARCHAR | Mangled/system name. |\n\
-             | `filename` | VARCHAR | Source file. |\n\
-             | `start_line` | BIGINT | First source line. |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {

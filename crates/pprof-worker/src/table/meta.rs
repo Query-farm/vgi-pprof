@@ -87,29 +87,57 @@ impl TableFunction for MetaTable {
              time, default sample type, value types, profiling",
             "Profile metadata",
         );
+        let mut cols = vec![
+            (
+                "sample_types",
+                "STRUCT(type VARCHAR, unit VARCHAR)[]",
+                "The value types each sample carries, in order; the Nth entry names value[N] in \
+                 pprof.stacks / pprof.samples.",
+            ),
+            (
+                "period",
+                "BIGINT",
+                "Number of events between sampled occurrences (the sampling period).",
+            ),
+            (
+                "period_type",
+                "STRUCT(type VARCHAR, unit VARCHAR)",
+                "The kind of event the period counts (e.g. (cpu, nanoseconds)); NULL if unset.",
+            ),
+            (
+                "duration_nanos",
+                "BIGINT",
+                "Wall-clock duration the profile covers, in nanoseconds (0 if not meaningful).",
+            ),
+            (
+                "time_nanos",
+                "BIGINT",
+                "Collection time as nanoseconds since the Unix epoch (0 if unset).",
+            ),
+            (
+                "default_sample_type",
+                "VARCHAR",
+                "The preferred sample value type's name; NULL if unset.",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `sample_types` | STRUCT(type VARCHAR, unit VARCHAR)[] | Names each `value` slot. |\n\
-             | `period` | BIGINT | Events between samples. |\n\
-             | `period_type` | STRUCT(type VARCHAR, unit VARCHAR) | What the period counts. |\n\
-             | `duration_nanos` | BIGINT | Profile duration (ns). |\n\
-             | `time_nanos` | BIGINT | Collection time (ns since epoch). |\n\
-             | `default_sample_type` | VARCHAR | Preferred value type name. |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {
             description: "Decode a pprof profile's metadata (sample types, period, duration)"
                 .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT sample_types, period, duration_nanos, default_sample_type FROM \
-                      pprof.main.meta('heap.pb.gz') WHERE error IS NULL;"
+                sql: format!(
+                    "SELECT sample_types, period, duration_nanos, default_sample_type \
+                     FROM pprof.main.meta(from_base64('{}')) WHERE error IS NULL;",
+                    crate::meta::GO_HEAP_B64
+                ),
+                description: "Inspect a heap profile's sample value types and duration, from a \
+                              profile passed inline as BLOB bytes."
                     .into(),
-                description: "Inspect a profile's sample value types and duration.".into(),
                 expected_output: None,
             }],
             tags,

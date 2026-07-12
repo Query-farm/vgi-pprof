@@ -29,7 +29,7 @@ mod scalar;
 mod source;
 mod table;
 
-use vgi::catalog::{CatSchema, CatalogModel};
+use vgi::catalog::{CatSchema, CatView, CatalogModel};
 use vgi::Worker;
 
 /// Worker version string, surfaced by `pprof_version()`.
@@ -160,6 +160,38 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                          row with one column named version.",
                         "SELECT pprof.main.pprof_version() AS version",
                     ),
+                    (
+                        "sample_count",
+                        "data/go_cpu.pb.gz is a Go CPU profile. How many samples (recorded stack \
+                         traces) does it contain? Return one row with a single column named n.",
+                        "SELECT count(*) AS n FROM pprof.main.samples('data/go_cpu.pb.gz') \
+                         WHERE error IS NULL",
+                    ),
+                    (
+                        "function_table_size",
+                        "How many rows does the function table of data/go_cpu.pb.gz have (the \
+                         number of distinct symbolized functions in the profile)? Return one row \
+                         with a single column named n.",
+                        "SELECT count(*) AS n FROM pprof.main.functions('data/go_cpu.pb.gz') \
+                         WHERE error IS NULL",
+                    ),
+                    (
+                        "deepest_inlining",
+                        "In data/go_cpu.pb.gz, across all locations, what is the greatest number \
+                         of line-table entries on any single location (the deepest inlining the \
+                         compiler folded into one instruction address)? Return one row with a \
+                         single column named max_inline.",
+                        "SELECT max(len(lines)) AS max_inline \
+                         FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL",
+                    ),
+                    (
+                        "cpu_value_index",
+                        "Using the worker's built-in reference guide of pprof sample value types, \
+                         which value index carries CPU time measured in nanoseconds for a Go 'cpu' \
+                         profile? Return one row with a single column named value_index.",
+                        "SELECT value_index FROM pprof.main.sample_type_guide \
+                         WHERE producer = 'Go' AND profile_kind = 'cpu' AND unit = 'nanoseconds'",
+                    ),
                 ]),
             ),
             // VGI151/VGI506 representative example queries at the catalog level.
@@ -270,11 +302,112 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         .to_string(),
                 ),
             ],
-            views: Vec::new(),
+            views: vec![sample_type_guide_view()],
             macros: Vec::new(),
             tables: Vec::new(),
         }],
         ..Default::default()
+    }
+}
+
+/// A small, browsable reference view (`pprof.main.sample_type_guide`) that maps
+/// the common `(producer, profile_kind, value_index)` conventions to the sample
+/// type and unit each `value[N]` slot carries. It is backed entirely by a
+/// `VALUES` list, so it scans instantly with no file, network, or credential —
+/// and it gives an agent a browsable table to read *before* it has to guess
+/// which `value` index to sum (VGI146), e.g. that Go CPU time is `value[2]` in
+/// nanoseconds. The authoritative per-profile answer is always
+/// `pprof.main.meta(src).sample_types`; this view is the cross-profile cheat
+/// sheet for the widespread Go/runtime conventions.
+fn sample_type_guide_view() -> CatView {
+    // NOTE: keep these rows consistent with the pprof/runtime conventions the
+    // tables document (see the `value` column comment on pprof.stacks/samples).
+    let definition = "SELECT * FROM (VALUES \
+        ('Go', 'cpu', 1, 'samples', 'count', 'Number of CPU samples that landed on this stack'), \
+        ('Go', 'cpu', 2, 'cpu', 'nanoseconds', 'CPU time attributed to this stack'), \
+        ('Go', 'heap', 1, 'alloc_objects', 'count', 'Objects allocated since the process started'), \
+        ('Go', 'heap', 2, 'alloc_space', 'bytes', 'Bytes allocated since the process started'), \
+        ('Go', 'heap', 3, 'inuse_objects', 'count', 'Objects still live at profile time'), \
+        ('Go', 'heap', 4, 'inuse_space', 'bytes', 'Bytes still live at profile time'), \
+        ('Go', 'allocs', 1, 'alloc_objects', 'count', 'Objects allocated since the process started'), \
+        ('Go', 'allocs', 2, 'alloc_space', 'bytes', 'Bytes allocated since the process started'), \
+        ('Go', 'block', 1, 'contentions', 'count', 'Blocking events observed'), \
+        ('Go', 'block', 2, 'delay', 'nanoseconds', 'Time spent blocked'), \
+        ('Go', 'mutex', 1, 'contentions', 'count', 'Mutex contention events observed'), \
+        ('Go', 'mutex', 2, 'delay', 'nanoseconds', 'Time spent waiting on the mutex')) \
+        AS t(producer, profile_kind, value_index, sample_type, unit, meaning)"
+        .to_string();
+
+    let example_queries =
+        "[{\"description\":\"Look up which value slot holds CPU time for a Go CPU \
+        profile (and in what unit).\",\"sql\":\"SELECT value_index, sample_type, unit FROM \
+        pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' ORDER BY \
+        value_index\"}]"
+            .to_string();
+
+    let mut tags = crate::meta::object_tags(
+        "pprof Value-Slot Reference",
+        "A browsable reference table mapping common pprof `(producer, profile_kind, value_index)` \
+         conventions to the `sample_type` and `unit` that each `value[N]` slot carries — e.g. for a \
+         Go 'cpu' profile value[1] is samples/count and value[2] is cpu/nanoseconds. Read it to \
+         know which `value` index to sum in pprof.stacks / pprof.samples without decoding a file \
+         first; the authoritative per-profile answer is pprof.meta(src).sample_types. Backed by a \
+         VALUES list, so it scans with no file, network, or credential.",
+        "Reference table of common pprof sample value-type conventions: `producer`, \
+         `profile_kind`, `value_index`, `sample_type`, `unit`, `meaning`. Tells you which \
+         `value[N]` slot to read (e.g. Go CPU time is value[2], nanoseconds).",
+        "pprof, sample type, sample_type, value index, cpu, nanoseconds, alloc, heap, inuse, \
+         mutex, block, contentions, delay, units, reference, guide, conventions",
+        "Profile metadata",
+    );
+    // VGI123 classifying tag (bare keys, matching the schema's domain/topic
+    // vocabulary) — object_tags only sets the navigation `vgi.category`.
+    tags.push(("domain".to_string(), "observability".to_string()));
+    tags.push(("topic".to_string(), "pprof-profiles".to_string()));
+    tags.push(("vgi.example_queries".to_string(), example_queries));
+
+    CatView {
+        name: "sample_type_guide".to_string(),
+        definition,
+        comment: Some(
+            "Reference table of common pprof sample value-type conventions: which sample_type and \
+             unit each value[N] slot carries per (producer, profile_kind). VALUES-backed, so it \
+             scans with no file or credential."
+                .to_string(),
+        ),
+        tags,
+        column_comments: vec![
+            (
+                "producer".to_string(),
+                "The profiler/runtime that emitted the profile (e.g. 'Go').".to_string(),
+            ),
+            (
+                "profile_kind".to_string(),
+                "The kind of profile within that producer (e.g. 'cpu', 'heap', 'allocs', 'mutex', \
+                 'block')."
+                    .to_string(),
+            ),
+            (
+                "value_index".to_string(),
+                "1-based position of this value in the sample's `value` list (value[value_index] \
+                 in pprof.stacks / pprof.samples)."
+                    .to_string(),
+            ),
+            (
+                "sample_type".to_string(),
+                "The value type's name at this index, matching meta.sample_types[value_index].type."
+                    .to_string(),
+            ),
+            (
+                "unit".to_string(),
+                "The unit the value is measured in (e.g. 'count', 'bytes', 'nanoseconds')."
+                    .to_string(),
+            ),
+            (
+                "meaning".to_string(),
+                "A plain-language description of what this value slot counts.".to_string(),
+            ),
+        ],
     }
 }
 

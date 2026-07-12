@@ -1,22 +1,17 @@
 # vgi-lint-check configuration for the vgi-pprof worker.
 #
-# Every table function decodes a profile read from a `src` FILE (or glob, or
-# inline BLOB). The lint sandbox attaches only the worker with no fixtures on
-# disk, so the example-EXECUTION rules (VGI901/902/906/907) — which actually run
-# each example query and expect rows back — cannot materialize there. The same
-# example queries ARE executed for real by the haybarn SQLLogic E2E
-# (test/sql/*.test), which loads `vgi`, attaches the worker, and runs them
-# against the committed fixtures on every transport.
+# No rule is suppressed. Every example query and every vgi.executable_examples
+# statement decodes a profile from an inline BLOB literal (a small base64-encoded
+# pprof fixture), so the example-EXECUTION rules (VGI901/902/906/907) and the
+# scan-responds rule (VGI911) materialize rows with no file on disk and no
+# network — they run fully in the lint sandbox against the live worker. The same
+# example queries are ALSO executed for real against the committed on-disk
+# fixtures by the haybarn SQLLogic E2E (test/sql/*.test) on every transport.
 #
-# All STATIC metadata rules still gate at `info`: catalog `source_url`, the
-# classifying schema tags (domain/category/topic), titles, doc_llm/doc_md,
-# keywords, per-argument docs, per-column comments, example_queries,
-# result_columns_md, and the executable_examples payload are emitted from the
-# worker's catalog + FunctionMetadata (crates/pprof-worker/src/**) and read by
-# the linter over VGI.
+# fail_on = "info" is STRICTER than the default gate and is intentional: the
+# worker must be clean down to info severity.
 [tool.vgi-lint-check]
 select = ["ALL"]
-ignore = ["VGI901", "VGI902", "VGI906", "VGI907"]
 fail_on = "info"
 
 [tool.vgi-lint-check.options]

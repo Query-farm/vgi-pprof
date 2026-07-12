@@ -83,29 +83,59 @@ impl TableFunction for Mappings {
              binary, library, vdso, symbolization, vgi-symbols",
             "Raw profile graph",
         );
+        let mut cols = vec![
+            (
+                "mapping_id",
+                "UBIGINT",
+                "The mapping's unique id within the profile (verbatim); referenced by \
+                 pprof.locations.mapping_id.",
+            ),
+            (
+                "memory_start",
+                "UBIGINT",
+                "Start of the address range the binary/library is loaded at.",
+            ),
+            (
+                "memory_limit",
+                "UBIGINT",
+                "Exclusive end of the loaded address range.",
+            ),
+            (
+                "file_offset",
+                "UBIGINT",
+                "Offset in the object file that corresponds to memory_start.",
+            ),
+            (
+                "filename",
+                "VARCHAR",
+                "Object the mapping is loaded from (a path, or a pseudo-name like '[vdso]'); NULL \
+                 if unset.",
+            ),
+            (
+                "build_id",
+                "VARCHAR",
+                "Build id uniquely identifying the binary version, emitted verbatim so unresolved \
+                 native frames can be symbolized downstream (vgi-symbols); NULL if unset.",
+            ),
+        ];
+        cols.extend(crate::meta::trailing_result_columns());
         tags.push((
-            "vgi.result_columns_md".into(),
-            "| column | type | description |\n\
-             |---|---|---|\n\
-             | `mapping_id` | UBIGINT | Mapping id (verbatim). |\n\
-             | `memory_start` | UBIGINT | Load address range start. |\n\
-             | `memory_limit` | UBIGINT | Load address range end. |\n\
-             | `file_offset` | UBIGINT | Object-file offset of memory_start. |\n\
-             | `filename` | VARCHAR | Object path / pseudo-name. |\n\
-             | `build_id` | VARCHAR | Build id (feeds vgi-symbols). |\n\
-             | `file` | VARCHAR | Source path (NULL for BLOB input). |\n\
-             | `error` | VARCHAR | NULL on success, else the decode error. |"
-                .into(),
+            "vgi.result_columns_schema".into(),
+            crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         FunctionMetadata {
             description: "Decode a pprof profile's mapping table (build_id feeds vgi-symbols)"
                 .into(),
             examples: vec![FunctionExample {
-                sql: "SELECT mapping_id, filename, build_id FROM pprof.main.mappings('native.pb.gz') \
-                      WHERE error IS NULL AND build_id IS NOT NULL;"
-                    .into(),
-                description: "List mappings with a build_id (the binaries still to symbolize)."
+                sql: format!(
+                    "SELECT mapping_id, filename, build_id \
+                     FROM pprof.main.mappings(from_base64('{}')) \
+                     WHERE error IS NULL AND build_id IS NOT NULL;",
+                    crate::meta::NATIVE_B64
+                ),
+                description: "List the mappings that carry a build_id (the binaries still to \
+                              symbolize), from a native profile passed inline as BLOB bytes."
                     .into(),
                 expected_output: None,
             }],
