@@ -4,7 +4,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_build as ab;
@@ -59,13 +59,14 @@ impl TableFunction for Samples {
         let mut tags = crate::meta::object_tags(
             "Raw Samples",
             "Decode a pprof profile's raw samples: one row per sample with `location_ids` \
-             (LIST(UBIGINT), leaf first), `value` (LIST(BIGINT) aligned to meta.sample_types), and \
-             `labels` (MAP). No resolution is applied — join `location_ids` to pprof.locations and \
-             onward to pprof.functions, or use pprof.stacks for the pre-resolved view. `src` may be \
-             a path, glob, list, or BLOB; a bad file yields one error row.",
-            "Raw pprof samples: `sample_id`, `location_ids` (UBIGINT[], leaf first), `value` \
-             (BIGINT[]), and `labels` (MAP). Join `location_ids` to `locations`, or use `stacks` \
-             for resolved frames.",
+             (a `LIST(UBIGINT)`, leaf first), `value` (a `LIST(BIGINT)` aligned to \
+             meta.sample_types), and `labels` (a `MAP`). No resolution is applied — join \
+             `location_ids` to pprof.locations and onward to pprof.functions, or use pprof.stacks \
+             for the pre-resolved view. `src` may be a path, glob, list, or `BLOB`; a bad file \
+             yields one error row.",
+            "Raw pprof samples: `sample_id`, `location_ids` (`UBIGINT[]`, leaf first), `value` \
+             (`BIGINT[]`), and `labels` (a `MAP`). Join `location_ids` to `locations`, or use \
+             `stacks` for resolved frames.",
             "pprof, samples, raw samples, location ids, values, labels, stack, profiling, join",
             "Raw profile graph",
         );
@@ -98,16 +99,17 @@ impl TableFunction for Samples {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![(
+            "Raw samples with their leaf location id.".into(),
+            "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
+             pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
+                .into(),
+        )]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's raw samples (location ids + values + labels)"
                 .into(),
-            examples: vec![FunctionExample {
-                sql: "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
-                      pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
-                    .into(),
-                description: "Raw samples with their leaf location id.".into(),
-                expected_output: None,
-            }],
+            examples,
             tags,
             ..Default::default()
         }

@@ -52,7 +52,9 @@ a `LIST(VARCHAR)` of paths, or a `BLOB` of inline profile bytes.
 | **Locations** | `pprof.locations(src)` → `location_id`, `address`, `mapping_id`, `lines LIST(STRUCT(function_id, line))` |
 | **Mappings** | `pprof.mappings(src)` → `mapping_id`, `memory_start`, `memory_limit`, `file_offset`, `filename`, `build_id` |
 | **Metadata** | `pprof.meta(src)` → one row: `sample_types LIST(STRUCT(type, unit))`, `period`, `period_type`, `duration_nanos`, `time_nanos`, `default_sample_type` |
-| **Version** | `pprof.pprof_version()` → the worker's version string |
+
+The worker's build version is published as the catalog's `implementation_version` metadata
+(surfaced by `catalog_catalogs()`), not as a scalar function.
 
 Every table also appends two trailing columns: **`file`** (the source path, NULL for a BLOB
 input) and **`error`** (NULL on success).

@@ -4,7 +4,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use pprof_core::LineRef;
@@ -64,12 +64,12 @@ impl TableFunction for Locations {
         let mut tags = crate::meta::object_tags(
             "Locations Table",
             "Decode a pprof profile's location table: one row per location with `location_id` \
-             (verbatim), `address`, `mapping_id`, and `lines` (LIST(STRUCT(function_id, line)), \
-             innermost inlined frame first). Join `mapping_id` to pprof.mappings and \
-             `lines[].function_id` to pprof.functions to symbolize. `src` may be a path, glob, \
-             list, or BLOB; a bad file yields one error row.",
+             (verbatim), `address`, `mapping_id`, and `lines` (a \
+             `LIST(STRUCT(function_id, line))`, innermost inlined frame first). Join `mapping_id` \
+             to pprof.mappings and `lines[].function_id` to pprof.functions to symbolize. `src` \
+             may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
             "pprof locations: `location_id`, `address`, `mapping_id`, and `lines` \
-             (STRUCT(function_id, line)[]). Join `mapping_id` to `mappings`, `lines[].function_id` \
+             (`STRUCT(function_id, line)[]`). Join `mapping_id` to `mappings`, `lines[].function_id` \
              to `functions`.",
             "pprof, locations, location table, address, mapping id, line table, inlined frames, \
              function id, symbolization, join",
@@ -106,15 +106,16 @@ impl TableFunction for Locations {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![(
+            "Locations with their line table (inlined frames).".into(),
+            "SELECT location_id, address, mapping_id, lines FROM \
+             pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
+                .into(),
+        )]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's location table".into(),
-            examples: vec![FunctionExample {
-                sql: "SELECT location_id, address, mapping_id, lines FROM \
-                      pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
-                    .into(),
-                description: "Locations with their line table (inlined frames).".into(),
-                expected_output: None,
-            }],
+            examples,
             tags,
             ..Default::default()
         }

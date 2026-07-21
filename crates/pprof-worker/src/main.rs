@@ -25,14 +25,14 @@
 
 mod arrow_build;
 mod meta;
-mod scalar;
 mod source;
 mod table;
 
 use vgi::catalog::{CatSchema, CatView, CatalogModel};
 use vgi::Worker;
 
-/// Worker version string, surfaced by `pprof_version()`.
+/// Worker build version string, published as the catalog's
+/// `implementation_version` metadata.
 pub fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -70,7 +70,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  profiles at once and gate CI on performance regressions, which the interactive, \
                  single-file `go tool pprof` can't do. The headline is a flattened, flamegraph-ready \
                  view: one row per sample carrying its per-type measured values (a list of BIGINTs \
-                 aligned to the profile's sample value types), its labels as a MAP, and its call \
+                 aligned to the profile's sample value types), its labels as a `MAP`, and its call \
                  stack pre-resolved leaf-first as a list of frame structs (inlined frames expanded, \
                  unsymbolized frames keeping their raw address) — so a flamegraph diff becomes a \
                  GROUP BY over frames with a SUM and no manual join. The underlying protobuf graph \
@@ -155,12 +155,6 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                          FROM c LEFT JOIN b USING (fn) ORDER BY c.ns DESC LIMIT 1",
                     ),
                     (
-                        "worker_version",
-                        "What version of the pprof worker is currently running? Return a single \
-                         row with one column named version.",
-                        "SELECT pprof.main.pprof_version() AS version",
-                    ),
-                    (
                         "sample_count",
                         "data/go_cpu.pb.gz is a Go CPU profile. How many samples (recorded stack \
                          traces) does it contain? Return one row with a single column named n.",
@@ -204,8 +198,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  SELECT sample_id, frame[1].function AS leaf, value \
                  FROM pprof.main.stacks('cpu.pb.gz') WHERE error IS NULL;\n\
                  SELECT mapping_id, filename, build_id FROM pprof.main.mappings('native.pb.gz') \
-                 WHERE build_id IS NOT NULL;\n\
-                 SELECT pprof.main.pprof_version();"
+                 WHERE build_id IS NOT NULL;"
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -224,6 +217,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             ),
         ],
         source_url: Some("https://github.com/Query-farm/vgi-pprof".to_string()),
+        // Publish the running build version as catalog metadata (surfaced via
+        // catalog_catalogs) rather than as a parameterless pprof_version() scalar
+        // (VGI328).
+        implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
             comment: Some(
@@ -266,9 +263,10 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     "vgi.doc_llm".to_string(),
                     "Decode a pprof profile into SQL rows. The headline is a flattened, \
                      flamegraph-ready view — one row per sample with its per-type values (a list of \
-                     BIGINTs aligned to the profile's sample value types), its labels as a MAP, and \
-                     its call stack pre-resolved leaf-first as frame structs — so a flamegraph diff \
-                     is a GROUP BY over frames with a SUM and no join. The underlying protobuf graph \
+                     BIGINTs aligned to the profile's sample value types), its labels as a `MAP`, \
+                     and its call stack pre-resolved leaf-first as frame structs — so a flamegraph \
+                     diff is a GROUP BY over frames with a SUM and no join. The underlying protobuf \
+                     graph \
                      is also exposed for ad-hoc joins with the profile's original ids passed \
                      through verbatim, alongside a one-row summary of the sample value types, \
                      sampling period, and duration. The profile source is a path, a glob, a list of \
@@ -290,16 +288,34 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                      bad file in a glob becomes one error row instead of aborting the scan."
                         .to_string(),
                 ),
-                // VGI506 representative example queries for the schema.
+                // VGI506/VGI515 representative example queries for the schema, as a
+                // described JSON list of {description, sql}.
                 (
                     "vgi.example_queries".to_string(),
-                    "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns \
-                     FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s \
-                     WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;\n\
-                     SELECT * FROM pprof.main.meta('data/go_heap.pb.gz');\n\
-                     SELECT * FROM pprof.main.mappings('data/native.pb.gz') WHERE build_id IS NOT NULL;\n\
-                     SELECT pprof.main.pprof_version();"
-                        .to_string(),
+                    crate::meta::example_queries_json(&[
+                        (
+                            "Top self-time functions across a directory of CPU profiles.".into(),
+                            "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns \
+                             FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s \
+                             WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20"
+                                .into(),
+                        ),
+                        (
+                            "A heap profile's sample value types, sampling period, and duration."
+                                .into(),
+                            "SELECT sample_types, period, duration_nanos \
+                             FROM pprof.main.meta('data/go_heap.pb.gz') WHERE error IS NULL"
+                                .into(),
+                        ),
+                        (
+                            "Mappings that carry a build id (the binaries still to symbolize)."
+                                .into(),
+                            "SELECT mapping_id, filename, build_id \
+                             FROM pprof.main.mappings('data/native.pb.gz') \
+                             WHERE error IS NULL AND build_id IS NOT NULL"
+                                .into(),
+                        ),
+                    ]),
                 ),
             ],
             views: vec![sample_type_guide_view()],
@@ -426,7 +442,6 @@ fn main() {
         std::env::var("VGI_WORKER_CATALOG_NAME").unwrap_or_else(|_| "pprof".to_string());
 
     let mut worker = Worker::new();
-    scalar::register(&mut worker);
     table::register(&mut worker);
     worker.set_catalog(catalog_metadata(&catalog_name));
     worker.run();

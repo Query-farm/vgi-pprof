@@ -26,11 +26,10 @@ crates/pprof-core/                  PURE decode/flatten engine (no Arrow/VGI)
   src/lib.rs                        gunzip + prost decode + flatten into row structs + unit tests
   tests/golden.rs                   golden fixtures (one per producer) + proptest no-panic fuzzing
 crates/pprof-worker/
-  src/main.rs                       Worker::new(); registers tables + scalar; catalog metadata + the VALUES-backed sample_type_guide view
+  src/main.rs                       Worker::new(); registers tables; catalog metadata (incl. implementation_version) + the VALUES-backed sample_type_guide view
   src/source.rs                     resolve overloaded `src` (path/glob/list/BLOB) + per-file error capture
   src/arrow_build.rs                row structs -> Arrow columns (LIST/STRUCT/MAP type defs shared with on_bind)
   src/table/{stacks,samples,functions,locations,mappings,meta,mod}.rs   thin table-fn adapters
-  src/scalar/{version,mod}.rs       pprof_version
   src/meta.rs                       vgi-lint metadata tag helpers (shared)
 data/generate_fixtures.go           builds the golden .pb.gz fixtures with google/pprof
 data/*.pb.gz                        committed fixtures (+ empty.pb.gz / bad.pb.gz for error tests)

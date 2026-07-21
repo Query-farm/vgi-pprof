@@ -5,7 +5,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use pprof_core::Frame;
@@ -66,16 +66,17 @@ impl TableFunction for Stacks {
         let mut tags = crate::meta::object_tags(
             "Flattened Stacks (headline)",
             "Flatten a pprof profile into one row per sample with the call stack pre-resolved: \
-             `value` is a LIST(BIGINT) aligned to meta.sample_types, `labels` is a \
-             MAP(VARCHAR,VARCHAR), and `frame` is a LIST(STRUCT(function, filename, line, address)) \
-             ordered leaf-first (inlined frames expanded, unsymbolized frames keep their address). \
-             This is the 90% view: a flamegraph diff across many profiles is a GROUP BY frame … \
-             SUM(value) with no manual location/function join. `src` may be a file path, a glob, a \
-             LIST of paths, or inline BLOB bytes; a bad file yields one error row.",
+             `value` is a `LIST(BIGINT)` aligned to meta.sample_types, `labels` is a \
+             `MAP(VARCHAR, VARCHAR)`, and `frame` is a \
+             `LIST(STRUCT(function, filename, line, address))` ordered leaf-first (inlined frames \
+             expanded, unsymbolized frames keep their address). This is the 90% view: a flamegraph \
+             diff across many profiles is a GROUP BY frame … SUM(value) with no manual \
+             location/function join. `src` may be a file path, a glob, a list of paths, or inline \
+             `BLOB` bytes; a bad file yields one error row.",
             "Flatten a pprof profile into flamegraph-ready rows: `sample_id`, `value` \
-             (LIST(BIGINT) aligned to the sample types), `labels` (MAP), and `frame` \
-             (LIST(STRUCT(function, filename, line, address)), leaf first). Use it to diff profiles \
-             in SQL.",
+             (a `LIST(BIGINT)` aligned to the sample types), `labels` (a `MAP`), and `frame` \
+             (a `LIST(STRUCT(function, filename, line, address))`, leaf first). Use it to diff \
+             profiles in SQL.",
             "pprof, stacks, flamegraph, stack trace, profile diff, regression, self time, cpu, \
              flatten, frames, leaf, samples, profiling",
             "Flattened stacks",
@@ -110,31 +111,31 @@ impl TableFunction for Stacks {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![
+            (
+                "Flatten a profile passed inline as BLOB bytes (self-contained): each sample's \
+                 leaf frame and per-type values."
+                    .into(),
+                format!(
+                    "SELECT sample_id, frame[1].function AS leaf, value \
+                     FROM pprof.main.stacks(from_base64('{}')) WHERE error IS NULL;",
+                    crate::meta::GO_CPU_B64
+                ),
+            ),
+            (
+                "Top self-time functions in a CPU profile (value[2] = cpu/nanoseconds), read \
+                 from a file path."
+                    .into(),
+                "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM \
+                 pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL \
+                 GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
+                    .into(),
+            ),
+        ]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Flatten a pprof profile into flamegraph-ready stack rows".into(),
-            examples: vec![
-                FunctionExample {
-                    sql: format!(
-                        "SELECT sample_id, frame[1].function AS leaf, value \
-                         FROM pprof.main.stacks(from_base64('{}')) WHERE error IS NULL;",
-                        crate::meta::GO_CPU_B64
-                    ),
-                    description: "Flatten a profile passed inline as BLOB bytes (self-contained): \
-                                  each sample's leaf frame and per-type values."
-                        .into(),
-                    expected_output: None,
-                },
-                FunctionExample {
-                    sql: "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM \
-                          pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL \
-                          GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
-                        .into(),
-                    description: "Top self-time functions in a CPU profile (value[2] = \
-                                  cpu/nanoseconds), read from a file path."
-                        .into(),
-                    expected_output: None,
-                },
-            ],
+            examples,
             tags,
             ..Default::default()
         }

@@ -4,7 +4,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_build as ab;
@@ -75,7 +75,7 @@ impl TableFunction for Mappings {
              `mapping_id` (verbatim), the loaded address range (`memory_start`, `memory_limit`), \
              `file_offset`, `filename`, and `build_id`. The `build_id` is emitted verbatim so the \
              addresses of unsymbolized native frames flow to a symbolizer (vgi-symbols) for \
-             addr→symbol resolution. `src` may be a path, glob, list, or BLOB; a bad file yields \
+             addr→symbol resolution. `src` may be a path, glob, list, or `BLOB`; a bad file yields \
              one error row.",
             "pprof mappings: `mapping_id`, `memory_start`, `memory_limit`, `file_offset`, \
              `filename`, `build_id`. `build_id` feeds a downstream symbolizer.",
@@ -124,21 +124,22 @@ impl TableFunction for Mappings {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![(
+            "List the mappings that carry a build_id (the binaries still to symbolize), from a \
+             native profile passed inline as BLOB bytes."
+                .into(),
+            format!(
+                "SELECT mapping_id, filename, build_id \
+                 FROM pprof.main.mappings(from_base64('{}')) \
+                 WHERE error IS NULL AND build_id IS NOT NULL;",
+                crate::meta::NATIVE_B64
+            ),
+        )]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's mapping table (build_id feeds vgi-symbols)"
                 .into(),
-            examples: vec![FunctionExample {
-                sql: format!(
-                    "SELECT mapping_id, filename, build_id \
-                     FROM pprof.main.mappings(from_base64('{}')) \
-                     WHERE error IS NULL AND build_id IS NOT NULL;",
-                    crate::meta::NATIVE_B64
-                ),
-                description: "List the mappings that carry a build_id (the binaries still to \
-                              symbolize), from a native profile passed inline as BLOB bytes."
-                    .into(),
-                expected_output: None,
-            }],
+            examples,
             tags,
             ..Default::default()
         }

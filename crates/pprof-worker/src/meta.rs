@@ -29,6 +29,48 @@ pub fn keywords_json(keywords: &str) -> String {
     format!("[{}]", items.join(","))
 }
 
+/// Build a table function's example set from ONE list of `(description, sql)`
+/// pairs, returning both the native `vgi::FunctionExample` vec (surfaced into the
+/// `duckdb_functions().examples` column) and the described `vgi.example_queries`
+/// tag JSON. Because both carriers are generated from the same `sql` strings, the
+/// linter's dedup keeps the described copy — the native column drops per-example
+/// descriptions, so without the tag VGI515 would flag every example as
+/// undescribed.
+pub fn described_examples(pairs: Vec<(String, String)>) -> (Vec<vgi::FunctionExample>, String) {
+    let examples = pairs
+        .iter()
+        .map(|(description, sql)| vgi::FunctionExample {
+            sql: sql.clone(),
+            description: description.clone(),
+            expected_output: None,
+        })
+        .collect();
+    (examples, example_queries_json(&pairs))
+}
+
+/// Encode `(description, sql)` pairs as the described `vgi.example_queries` JSON
+/// array of `{"description","sql"}` objects (VGI502/VGI515).
+pub fn example_queries_json(pairs: &[(String, String)]) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('\\', "\\\\")
+            .replace('"', "\\\"")
+            .replace('\n', "\\n")
+            .replace('\r', "")
+            .replace('\t', " ")
+    }
+    let items: Vec<String> = pairs
+        .iter()
+        .map(|(description, sql)| {
+            format!(
+                "{{\"description\":\"{}\",\"sql\":\"{}\"}}",
+                esc(description),
+                esc(sql)
+            )
+        })
+        .collect();
+    format!("[{}]", items.join(","))
+}
+
 /// Build the `vgi.agent_test_tasks` JSON value: a fixed suite of analyst tasks
 /// that `vgi-lint simulate` runs. Each `(name, prompt, reference_sql)` triple
 /// becomes a task object; the `prompt` is shown to the simulated analyst while

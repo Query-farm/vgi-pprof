@@ -4,7 +4,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use pprof_core::ValueType;
@@ -74,14 +74,14 @@ impl TableFunction for MetaTable {
     fn metadata(&self) -> FunctionMetadata {
         let mut tags = crate::meta::object_tags(
             "Profile Metadata",
-            "Decode a pprof profile's metadata into one row: `sample_types` \
-             (LIST(STRUCT(type, unit)) describing each value slot), `period`, `period_type` \
-             (STRUCT(type, unit)), `duration_nanos`, `time_nanos`, and `default_sample_type`. Use \
-             `sample_types` to interpret the `value` LIST in pprof.stacks / pprof.samples (the Nth \
-             type names value[N]). `src` may be a path, glob, list, or BLOB; a bad file yields one \
-             error row.",
-            "pprof profile metadata (one row): `sample_types` (STRUCT(type,unit)[]), `period`, \
-             `period_type` (STRUCT(type,unit)), `duration_nanos`, `time_nanos`, \
+            "Decode a pprof profile's metadata into one row: `sample_types` (a \
+             `LIST(STRUCT(type, unit))` describing each value slot), `period`, `period_type` (a \
+             `STRUCT(type, unit)`), `duration_nanos`, `time_nanos`, and `default_sample_type`. Use \
+             `sample_types` to interpret the `value` list in pprof.stacks / pprof.samples (the Nth \
+             type names value[N]). `src` may be a path, glob, list, or `BLOB`; a bad file yields \
+             one error row.",
+            "pprof profile metadata (one row): `sample_types` (`STRUCT(type, unit)[]`), `period`, \
+             `period_type` (`STRUCT(type, unit)`), `duration_nanos`, `time_nanos`, \
              `default_sample_type`. `sample_types` names the `value` slots.",
             "pprof, meta, metadata, sample types, sample_type, period, period type, duration, \
              time, default sample type, value types, profiling",
@@ -126,20 +126,21 @@ impl TableFunction for MetaTable {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![(
+            "Inspect a heap profile's sample value types and duration, from a profile passed \
+             inline as BLOB bytes."
+                .into(),
+            format!(
+                "SELECT sample_types, period, duration_nanos, default_sample_type \
+                 FROM pprof.main.meta(from_base64('{}')) WHERE error IS NULL;",
+                crate::meta::GO_HEAP_B64
+            ),
+        )]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's metadata (sample types, period, duration)"
                 .into(),
-            examples: vec![FunctionExample {
-                sql: format!(
-                    "SELECT sample_types, period, duration_nanos, default_sample_type \
-                     FROM pprof.main.meta(from_base64('{}')) WHERE error IS NULL;",
-                    crate::meta::GO_HEAP_B64
-                ),
-                description: "Inspect a heap profile's sample value types and duration, from a \
-                              profile passed inline as BLOB bytes."
-                    .into(),
-                expected_output: None,
-            }],
+            examples,
             tags,
             ..Default::default()
         }

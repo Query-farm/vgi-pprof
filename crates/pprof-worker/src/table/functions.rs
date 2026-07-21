@@ -4,7 +4,7 @@
 use arrow_array::RecordBatch;
 use arrow_schema::{DataType, SchemaRef};
 use vgi::table_function::{TableFunction, TableProducer};
-use vgi::{ArgSpec, BindParams, BindResponse, FunctionExample, FunctionMetadata, ProcessParams};
+use vgi::{ArgSpec, BindParams, BindResponse, FunctionMetadata, ProcessParams};
 use vgi_rpc::{Result, RpcError};
 
 use crate::arrow_build as ab;
@@ -66,7 +66,7 @@ impl TableFunction for Functions {
             "Decode a pprof profile's function table: one row per function with `function_id` \
              (verbatim), `name`, `system_name` (mangled), `filename`, and `start_line`. Join \
              `function_id` from pprof.locations.lines to symbolize raw locations. `src` may be a \
-             path, glob, list, or BLOB; a bad file yields one error row.",
+             path, glob, list, or `BLOB`; a bad file yields one error row.",
             "pprof functions: `function_id`, `name`, `system_name`, `filename`, `start_line`. Join \
              `function_id` to `locations.lines[].function_id`.",
             "pprof, functions, function table, symbol, name, mangled, system name, filename, \
@@ -107,15 +107,16 @@ impl TableFunction for Functions {
             crate::meta::result_columns_schema(&cols),
         ));
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![(
+            "List the functions defined in a profile.".into(),
+            "SELECT function_id, name, filename, start_line FROM \
+             pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
+                .into(),
+        )]);
+        tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's function table".into(),
-            examples: vec![FunctionExample {
-                sql: "SELECT function_id, name, filename, start_line FROM \
-                      pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
-                    .into(),
-                description: "List the functions defined in a profile.".into(),
-                expected_output: None,
-            }],
+            examples,
             tags,
             ..Default::default()
         }
