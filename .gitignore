@@ -4,3 +4,6 @@
 .DS_Store
 # vgi-lint AI-review / simulate caches (may be written into the repo root)
 .vgi-*-cache.json
+
+# Browser build output (wasm/build.sh)
+/wasm/dist
