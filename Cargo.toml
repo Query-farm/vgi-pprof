@@ -19,7 +19,7 @@ repository = "https://github.com/Query-farm/vgi-pprof"
 # VGI Rust SDK (worker side), published on crates.io. Pulls in vgi-rpc 0.11 and
 # arrow 59 transitively; keep arrow/vgi-rpc here in lockstep with vgi's pins so a
 # single arrow/vgi-rpc resolves.
-vgi = { version = "0.24", default-features = false }
+vgi = { version = "0.31", default-features = false }
 vgi-rpc = { version = "0.16", default-features = false, features = ["macros"] }
 arrow-array = "59"
 arrow-buffer = "59"
