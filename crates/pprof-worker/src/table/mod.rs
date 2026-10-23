@@ -93,6 +93,12 @@ impl OneShot {
 }
 
 impl TableProducer for OneShot {
+    /// The whole result is one batch, so there is no cursor to resume: a
+    /// re-created producer simply rebuilds that batch from the bind params.
+    fn resume_supported(&self) -> bool {
+        false
+    }
+
     fn next_batch(&mut self, _out: &mut OutputCollector) -> Result<Option<RecordBatch>> {
         match self.units.take() {
             Some(units) => Ok(Some((self.build)(&units, &self.schema)?)),

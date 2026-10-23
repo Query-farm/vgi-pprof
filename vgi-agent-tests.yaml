@@ -1,0 +1,25 @@
+# Private graders for the agent-suitability suite (`vgi-lint simulate`).
+#
+# The prompts are published in the catalog's vgi.agent_test_tasks tag
+# (crates/pprof-worker/src/lib.rs); the canonical answers live here,
+# keyed by task name, so the agent being graded never sees them (VGI416).
+# vgi-lint discovers this file in the directory it runs from. The file-based
+# tasks use repo-relative `data/...` paths, so run vgi-lint from the repo root.
+
+tasks:
+  - name: top_cpu_function
+    reference_sql: "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 1"
+  - name: heap_sample_types
+    reference_sql: "SELECT len(sample_types) AS n FROM pprof.main.meta('data/go_heap.pb.gz') WHERE error IS NULL"
+  - name: native_build_ids
+    reference_sql: "SELECT build_id FROM pprof.main.mappings('data/native.pb.gz') WHERE error IS NULL AND build_id IS NOT NULL ORDER BY build_id"
+  - name: regression_diff
+    reference_sql: "WITH b AS (SELECT frame[1].function AS fn, sum(value[2]) AS ns FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1), c AS (SELECT frame[1].function AS fn, sum(value[2]) AS ns FROM pprof.main.stacks('data/go_cpu2.pb.gz') WHERE error IS NULL GROUP BY 1) SELECT c.fn AS fn, c.ns - COALESCE(b.ns, 0) AS delta FROM c LEFT JOIN b USING (fn) ORDER BY c.ns DESC LIMIT 1"
+  - name: sample_count
+    reference_sql: "SELECT count(*) AS n FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL"
+  - name: function_table_size
+    reference_sql: "SELECT count(*) AS n FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL"
+  - name: deepest_inlining
+    reference_sql: "SELECT max(len(lines)) AS max_inline FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL"
+  - name: cpu_value_index
+    reference_sql: "SELECT value_index FROM pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' AND unit = 'nanoseconds'"

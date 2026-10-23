@@ -127,24 +127,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                         "The file data/go_cpu.pb.gz is a Go CPU profile. Which leaf function has \
                          the most total CPU time? CPU nanoseconds is the second sample value. \
                          Return one row with a column named fn and a column named cpu_ns.",
-                        "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns \
-                         FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL \
-                         GROUP BY 1 ORDER BY 2 DESC LIMIT 1",
                     ),
                     (
                         "heap_sample_types",
                         "data/go_heap.pb.gz is a Go heap profile. How many distinct sample value \
                          types does it carry? Return one row with a single column named n.",
-                        "SELECT len(sample_types) AS n FROM pprof.main.meta('data/go_heap.pb.gz') \
-                         WHERE error IS NULL",
                     ),
                     (
                         "native_build_ids",
                         "data/native.pb.gz is an unsymbolized native profile. List the build ids of \
                          its mappings that have one, so they can be symbolized. Return a column \
                          named build_id.",
-                        "SELECT build_id FROM pprof.main.mappings('data/native.pb.gz') \
-                         WHERE error IS NULL AND build_id IS NOT NULL ORDER BY build_id",
                     ),
                     (
                         "regression_diff",
@@ -152,27 +145,17 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                          data/go_cpu2.pb.gz (candidate): for the busiest leaf function in the \
                          candidate, return its name and the CPU-nanosecond delta (candidate minus \
                          baseline). Return columns fn and delta.",
-                        "WITH b AS (SELECT frame[1].function AS fn, sum(value[2]) AS ns \
-                         FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1), \
-                         c AS (SELECT frame[1].function AS fn, sum(value[2]) AS ns \
-                         FROM pprof.main.stacks('data/go_cpu2.pb.gz') WHERE error IS NULL GROUP BY 1) \
-                         SELECT c.fn AS fn, c.ns - COALESCE(b.ns, 0) AS delta \
-                         FROM c LEFT JOIN b USING (fn) ORDER BY c.ns DESC LIMIT 1",
                     ),
                     (
                         "sample_count",
                         "data/go_cpu.pb.gz is a Go CPU profile. How many samples (recorded stack \
                          traces) does it contain? Return one row with a single column named n.",
-                        "SELECT count(*) AS n FROM pprof.main.samples('data/go_cpu.pb.gz') \
-                         WHERE error IS NULL",
                     ),
                     (
                         "function_table_size",
                         "How many rows does the function table of data/go_cpu.pb.gz have (the \
                          number of distinct symbolized functions in the profile)? Return one row \
                          with a single column named n.",
-                        "SELECT count(*) AS n FROM pprof.main.functions('data/go_cpu.pb.gz') \
-                         WHERE error IS NULL",
                     ),
                     (
                         "deepest_inlining",
@@ -180,16 +163,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                          of line-table entries on any single location (the deepest inlining the \
                          compiler folded into one instruction address)? Return one row with a \
                          single column named max_inline.",
-                        "SELECT max(len(lines)) AS max_inline \
-                         FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL",
                     ),
                     (
                         "cpu_value_index",
                         "Using the worker's built-in reference guide of pprof sample value types, \
                          which value index carries CPU time measured in nanoseconds for a Go 'cpu' \
                          profile? Return one row with a single column named value_index.",
-                        "SELECT value_index FROM pprof.main.sample_type_guide \
-                         WHERE producer = 'Go' AND profile_kind = 'cpu' AND unit = 'nanoseconds'",
                     ),
                 ]),
             ),
@@ -228,6 +207,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
         implementation_version: Some(version().to_string()),
         schemas: vec![CatSchema {
             name: "main".to_string(),
+            path: Vec::new(),
             comment: Some(
                 "Decode pprof profiles into SQL rows: flattened flamegraph-ready stacks, the raw \
                  profile.proto graph, and profile metadata."

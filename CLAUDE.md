@@ -19,7 +19,7 @@ things.
 ## Layout
 
 ```
-Cargo.toml                          workspace; pins vgi = "0.18.0" (→ vgi-rpc 0.11, arrow 59), prost 0.14
+Cargo.toml                          workspace; pins vgi = "0.46" (→ vgi-rpc 0.32, arrow 60), prost 0.14
 crates/pprof-core/                  PURE decode/flatten engine (no Arrow/VGI)
   proto/profile.proto               VENDORED Google pprof schema (Apache-2.0)
   build.rs                          prost-build codegen; protoc via protoc-bin-vendored (hermetic)

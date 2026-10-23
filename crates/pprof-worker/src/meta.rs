@@ -72,10 +72,11 @@ pub fn example_queries_json(pairs: &[(String, String)]) -> String {
 }
 
 /// Build the `vgi.agent_test_tasks` JSON value: a fixed suite of analyst tasks
-/// that `vgi-lint simulate` runs. Each `(name, prompt, reference_sql)` triple
-/// becomes a task object; the `prompt` is shown to the simulated analyst while
-/// `reference_sql` (the canonical solution) is hidden and re-run live to grade.
-pub fn agent_test_tasks_json(tasks: &[(&str, &str, &str)]) -> String {
+/// that `vgi-lint simulate` runs. Each `(name, prompt)` pair becomes a task
+/// object shown to the simulated analyst. The graders (`reference_sql`, the
+/// canonical solution re-run live to grade) are private and live in the
+/// `vgi-agent-tests.yaml` sidecar at the repo root, keyed by task name (VGI416).
+pub fn agent_test_tasks_json(tasks: &[(&str, &str)]) -> String {
     fn esc(s: &str) -> String {
         s.replace('\\', "\\\\")
             .replace('"', "\\\"")
@@ -83,12 +84,11 @@ pub fn agent_test_tasks_json(tasks: &[(&str, &str, &str)]) -> String {
     }
     let items: Vec<String> = tasks
         .iter()
-        .map(|(name, prompt, reference_sql)| {
+        .map(|(name, prompt)| {
             format!(
-                "{{\"name\":\"{}\",\"prompt\":\"{}\",\"reference_sql\":\"{}\"}}",
+                "{{\"name\":\"{}\",\"prompt\":\"{}\"}}",
                 esc(name),
-                esc(prompt),
-                esc(reference_sql)
+                esc(prompt)
             )
         })
         .collect();
