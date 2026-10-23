@@ -12,8 +12,8 @@
 #   TRANSPORT=unix ./run_tests.sh        # pick a transport
 #
 # Prereqs (one-time):
-#   uv tool install haybarn-unittest
-#   echo "INSTALL vgi FROM community;" | uvx haybarn-cli
+#   uv tool install 'haybarn-unittest<2'
+#   echo "INSTALL vgi FROM community;" | uvx --from 'haybarn-cli<2' haybarn-cli
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -26,7 +26,7 @@ cargo build --release --bin pprof-worker
 HAYBARN_UNITTEST="${HAYBARN_UNITTEST:-$(command -v haybarn-unittest || true)}"
 if [[ -z "$HAYBARN_UNITTEST" ]]; then
   echo "ERROR: haybarn-unittest not found. Install it with:" >&2
-  echo "       uv tool install haybarn-unittest" >&2
+  echo "       uv tool install 'haybarn-unittest<2'" >&2
   exit 1
 fi
 
