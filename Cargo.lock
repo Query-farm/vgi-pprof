@@ -1592,7 +1592,7 @@ dependencies = [
 
 [[package]]
 name = "pprof-core"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "flate2",
  "proptest",
@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "pprof-wasm"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "pprof-worker",
  "vgi",
@@ -1611,7 +1611,7 @@ dependencies = [
 
 [[package]]
 name = "pprof-worker"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
