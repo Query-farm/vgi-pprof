@@ -96,4 +96,4 @@ HAYBARN_UNITTEST=/path/to/haybarn-unittest WORKER_BIN="$PWD/target/release/pprof
 
 Or use the Makefile target `make test-sql`, which builds the release worker and
 runs the suite against a `haybarn-unittest` on `PATH` (`uv tool install
-haybarn-unittest`).
+--prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`).

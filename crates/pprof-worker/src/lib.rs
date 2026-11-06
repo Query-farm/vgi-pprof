@@ -409,6 +409,7 @@ fn sample_type_guide_view() -> CatView {
                 "A plain-language description of what this value slot counts.".to_string(),
             ),
         ],
+        ..Default::default()
     }
 }
 
