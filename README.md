@@ -20,7 +20,7 @@ community `vgi` extension; haybarn 1.5 cannot attach it.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'pprof' (TYPE vgi, LOCATION '/path/to/pprof-worker');
+ATTACH 'pprof' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.2.0');
 SET search_path = 'pprof.main';
 
 -- top self-time functions across a directory of CPU profiles
@@ -40,6 +40,39 @@ cand AS (
 SELECT cand.fn, cand.ns - COALESCE(base.ns, 0) AS delta
 FROM cand LEFT JOIN base USING (fn) ORDER BY delta DESC;
 ```
+
+## Quick start
+
+Every [GitHub release](https://github.com/Query-farm/vgi-pprof/releases) ships a prebuilt worker binary. The `vgi` extension downloads the one for your platform, checks its SHA-256 and caches it, so there is nothing to install besides DuckDB:
+
+```sql
+INSTALL vgi FROM community;
+LOAD vgi;
+
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.2.0');
+
+-- Top self-time functions across a directory of CPU profiles.
+SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;
+
+-- Look up which value slot holds CPU time for a Go CPU profile (and in what unit).
+SELECT value_index, sample_type, unit FROM pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' ORDER BY value_index;
+```
+
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.2.0` to move to a newer release.
+
+### Other ways to run it
+
+- **Docker** (the image bundles the worker; needs a container runtime):
+
+  ```sql
+  ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pprof:0.2.0');
+  ```
+
+- **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-pprof/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.
+
+### Build from source
+
+To build the worker yourself, see [Build & run](#build--run).
 
 ## How pprof maps onto SQL
 
