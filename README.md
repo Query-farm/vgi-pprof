@@ -15,7 +15,7 @@ performance-regression gates.
 Pyroscope extension (which pushes the inverse direction) and feeds
 [`vgi-symbols`](https://query.farm) the `build_id` of unsymbolized native frames.
 
-The worker speaks VGI protocol vgi.v3 (3.1), so it requires haybarn 2.0 and its
+The worker speaks VGI protocol vgi.v3 (3.2), so it requires haybarn 2.0 and its
 community `vgi` extension; haybarn 1.5 cannot attach it.
 
 ```sql
