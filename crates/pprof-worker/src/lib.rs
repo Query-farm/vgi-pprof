@@ -60,6 +60,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 "pprof Profile Decoder".to_string(),
             ),
             (
+                "vgi.subtitle".to_string(),
+                "Decode Go, gperftools, Parca and py-spy pprof profiles into SQL rows for \
+                 flamegraph diffs and CI performance-regression gates."
+                    .to_string(),
+            ),
+            (
                 "vgi.keywords".to_string(),
                 crate::meta::keywords_json(
                     "pprof, profile, profile.proto, profiling, flamegraph, CPU profile, heap \
@@ -214,7 +220,7 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                     .to_string(),
             ),
             tags: vec![
-                ("vgi.title".to_string(), "pprof — main".to_string()),
+                ("vgi.title".to_string(), "Profile tables".to_string()),
                 (
                     "vgi.keywords".to_string(),
                     crate::meta::keywords_json(

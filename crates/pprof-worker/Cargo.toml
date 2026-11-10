@@ -26,8 +26,12 @@ log = "0.4"
 
 # --- Native ---------------------------------------------------------------
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# The SDK's real default features — unchanged from before the wasm split.
-vgi = { workspace = true, features = ["sqlite", "transport-http"] }
+# HTTP transport only. The SDK's `sqlite` feature (a SQLite-backed buffering /
+# function-state store) is deliberately off: this worker never touches the
+# function store, and the feature bundles C SQLite via rusqlite 0.39 ->
+# libsqlite3-sys 0.37 (RUSTSEC-2026-0459). Without it the SDK falls back to its
+# file-system store (`VGI_WORKER_SHARED_STORAGE` unset -> fs).
+vgi = { workspace = true, features = ["transport-http"] }
 vgi-rpc = { workspace = true, features = ["http"] }
 env_logger = "0.11"
 
