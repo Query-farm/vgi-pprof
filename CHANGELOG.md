@@ -4,6 +4,13 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-11-12
+
+### Changed
+- Ported to VGI protocol 3.3 (vgi.v3 3.3.0): vgi 0.51.0, vgi-rpc 0.32.4.
+  Requires the current community `vgi` extension (3.3); 3.2 extensions are
+  incompatible. No worker-visible change (the worker has no catalog tables).
+
 ## [0.1.1] - 2026-07-21
 
 ### Changed
