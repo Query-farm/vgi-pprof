@@ -172,3 +172,7 @@ observability / CI-regression bundle but are not merged.
 
 MIT — see [LICENSE](LICENSE). The vendored `profile.proto` is Apache-2.0 (Google).
 Copyright 2026 Query Farm LLC — https://query.farm
+
+## Notebooks
+
+[Executed SQL walkthrough](notebooks/README.md): decode profile metric slots, compare leaf CPU totals and per-operation values, and preserve both sides of a profile difference.
