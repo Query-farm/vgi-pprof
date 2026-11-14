@@ -1,0 +1,26 @@
+{
+  "kind": "Authored synthetic pprof examples, not recorded workloads; broken.pb.gz intentionally truncated",
+  "source_repository": "https://github.com/Query-farm/vgi-pprof",
+  "source_revision": "863cddded49517068fcbb76582d8bc0832fc2352",
+  "generator": "notebooks/build_fixtures.py; standard-library protobuf subset and gzip mtime0",
+  "authored_profile_clock_UTC": "2023-11-14T22:13:20Z",
+  "workload_operations": {
+    "baseline": 100,
+    "candidate": 200
+  },
+  "files": {
+    "baseline.pb.gz": {
+      "sha256": "e510dc787ce1d72933d81a275209f0425250a0b0af7f233cbad9dab24b6e9eac",
+      "bytes": 331
+    },
+    "broken.pb.gz": {
+      "sha256": "ed513183de4a1a8b5d0a5e107bc1ab2ddd83eac2720c62e120ffd1f255304543",
+      "bytes": 13
+    },
+    "candidate.pb.gz": {
+      "sha256": "87a4f04a68a06c96b35c7f79374f908b6750579654a38a69b2a4c4783d694bad",
+      "bytes": 332
+    }
+  },
+  "license": "MIT; LICENSE-worker-MIT.txt"
+}
