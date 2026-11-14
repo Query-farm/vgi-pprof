@@ -23,3 +23,5 @@ tasks:
     reference_sql: "SELECT max(len(lines)) AS max_inline FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL"
   - name: cpu_value_index
     reference_sql: "SELECT value_index FROM pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' AND unit = 'nanoseconds'"
+  - name: inclusive_cpu_by_build_id
+    reference_sql: "WITH hit AS (SELECT DISTINCT s.sample_id, s.value[2] AS cpu_ns, m.build_id FROM pprof.main.samples('data/native.pb.gz') s, unnest(s.location_ids) AS u(location_id) JOIN pprof.main.locations('data/native.pb.gz') l ON l.location_id = u.location_id JOIN pprof.main.mappings('data/native.pb.gz') m ON m.mapping_id = l.mapping_id WHERE s.error IS NULL) SELECT build_id, sum(cpu_ns) AS cpu_ns FROM hit GROUP BY build_id ORDER BY build_id"

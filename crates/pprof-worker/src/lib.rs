@@ -176,6 +176,15 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                          which value index carries CPU time measured in nanoseconds for a Go 'cpu' \
                          profile? Return one row with a single column named value_index.",
                     ),
+                    (
+                        "inclusive_cpu_by_build_id",
+                        "data/native.pb.gz is an unsymbolized native CPU profile (value[2] is CPU \
+                         nanoseconds). For each loaded binary, identified by its mapping's build \
+                         id, how much CPU time was spent with that binary anywhere on the stack \
+                         (inclusive time: count each sample at most once per binary, even if \
+                         several of its frames fall in the same binary)? Return one row per build \
+                         id with columns build_id (VARCHAR) and cpu_ns (the summed nanoseconds).",
+                    ),
                 ]),
             ),
             // VGI151/VGI506 representative example queries at the catalog level.
@@ -184,11 +193,12 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns \
                  FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s \
                  WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;\n\
-                 SELECT * FROM pprof.main.meta('cpu.pb.gz');\n\
+                 SELECT sample_types, period, duration_nanos \
+                 FROM pprof.main.meta('data/go_cpu.pb.gz') WHERE error IS NULL;\n\
                  SELECT sample_id, frame[1].function AS leaf, value \
-                 FROM pprof.main.stacks('cpu.pb.gz') WHERE error IS NULL;\n\
-                 SELECT mapping_id, filename, build_id FROM pprof.main.mappings('native.pb.gz') \
-                 WHERE build_id IS NOT NULL;"
+                 FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY sample_id;\n\
+                 SELECT mapping_id, filename, build_id FROM pprof.main.mappings('data/native.pb.gz') \
+                 WHERE error IS NULL AND build_id IS NOT NULL ORDER BY mapping_id;"
                     .to_string(),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
@@ -306,6 +316,9 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                              WHERE error IS NULL AND build_id IS NOT NULL"
                                 .into(),
                         ),
+                        crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
+                        crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),
+                        crate::meta::example_pair(crate::meta::EX_INLINED_FRAMES),
                     ]),
                 ),
             ],

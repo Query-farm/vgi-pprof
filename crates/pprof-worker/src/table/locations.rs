@@ -13,16 +13,21 @@ use crate::arrow_build as ab;
 use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
-const EXECUTABLE_EXAMPLES: &str = r#"[
-  {
-    "description": "Locations with their line table (inlined frames).",
-    "sql": "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id LIMIT 10"
-  },
-  {
-    "description": "The most heavily inlined locations (longest line table = deepest inlining the compiler folded into one address).",
-    "sql": "SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5"
-  }
-]"#;
+/// The guaranteed-runnable examples (`vgi.executable_examples`), including the
+/// composed [`crate::meta::EX_INLINED_FRAMES`] (offline: it reads the committed fixtures).
+fn executable_examples() -> String {
+    crate::meta::example_queries_json(&[
+        crate::meta::example_pair((
+            "Locations with their line table (inlined frames).",
+            "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id LIMIT 10",
+        )),
+        crate::meta::example_pair((
+            "The most heavily inlined locations (longest line table = deepest inlining the compiler folded into one address).",
+            "SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5",
+        )),
+        crate::meta::example_pair(crate::meta::EX_INLINED_FRAMES),
+    ])
+}
 
 pub struct Locations;
 
@@ -105,13 +110,16 @@ impl TableFunction for Locations {
             "vgi.result_columns_schema".into(),
             crate::meta::result_columns_schema(&cols),
         ));
-        tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
-        let (examples, example_queries) = crate::meta::described_examples(vec![(
-            "Locations with their line table (inlined frames).".into(),
-            "SELECT location_id, address, mapping_id, lines FROM \
+        tags.push(("vgi.executable_examples".into(), executable_examples()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![
+            (
+                "Locations with their line table (inlined frames).".into(),
+                "SELECT location_id, address, mapping_id, lines FROM \
              pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
-                .into(),
-        )]);
+                    .into(),
+            ),
+            crate::meta::example_pair(crate::meta::EX_INLINED_FRAMES),
+        ]);
         tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's location table".into(),

@@ -39,6 +39,17 @@ cand AS (
   FROM pprof.stacks('candidate.pb.gz') WHERE error IS NULL GROUP BY 1)
 SELECT cand.fn, cand.ns - COALESCE(base.ns, 0) AS delta
 FROM cand LEFT JOIN base USING (fn) ORDER BY delta DESC;
+
+-- symbolization hand-off: hottest unsymbolized leaf addresses as
+-- (binary, build_id, offset-in-binary), joining samples → locations → mappings
+SELECT m.filename AS binary_path, m.build_id,
+       printf('0x%x', l.address - m.memory_start + m.file_offset) AS binary_offset,
+       sum(s.value[2]) AS cpu_ns
+FROM pprof.samples('native.pb.gz') s
+JOIN pprof.locations('native.pb.gz') l ON l.location_id = s.location_ids[1]
+JOIN pprof.mappings('native.pb.gz') m ON m.mapping_id = l.mapping_id
+WHERE s.error IS NULL
+GROUP BY ALL ORDER BY cpu_ns DESC, binary_offset;
 ```
 
 ## Quick start

@@ -176,3 +176,89 @@ pub const GO_HEAP_B64: &str = "H4sIAAAAAAAA/zyMMU6EQBSGndlh9+0A+rKJES0MUhEKSV4sL
 
 /// Base64 of a small unsymbolized native profile whose mappings carry build ids.
 pub const NATIVE_B64: &str = "H4sIAAAAAAAA/+Ji4WAUYOJi4WAWYBHi5mDkYBLgEWiYM8dSiJuDmYNRgF2gYfcGRSkhDkaBhoaGFawSDQ0tK1g1WA3YpMQ4mEBiDQ0P5CUaGg6AaA12Aw4lLg5GAUaJBR0NK1iVeDiYBJgktiwBq1Li4mAWYJRYPbFhBasRgxF7cWJuQU5qsRFrcn5pXokRc3JBqRF3XmJefnFqcn5eSrGRgH5+QYl+cVmyflJmHog24kk0TDJKNk4xSTVNMzOS18/JTNKvsDCLNzPRzcnMK63QTc8rBQkm6xXn65kZ8aSkJqYkpaamJSempXo0NKzY+Hj+89PiAQ2ntr5jjAJ7OqFh7SOWAgZAAAAA//9plBkzCAEAAA==";
+
+// Composed examples: each combines two or more of the worker's own tables in one
+// query a perf engineer would actually write. Every SQL is defined ONCE here and
+// referenced from the schema-level `vgi.example_queries` list (lib.rs), from the
+// example list of the table that drives the query (within its first five, which
+// is all the vgi-lint agent simulator shows), and from that table's
+// `vgi.executable_examples`. They read the committed `data/` fixtures, so they
+// are offline and deterministic; test/sql/composed.test pins their rows.
+
+/// `meta` + `stacks`: pick each profile's value slot by name from
+/// `meta.default_sample_type` instead of hard-coding `value[N]`, so one query
+/// aggregates CPU and heap profiles alike.
+pub const EX_DEFAULT_TYPE_BY_LEAF: (&str, &str) = (
+    "Total each profile's own default sample type (cpu for a CPU profile, inuse_space for a heap \
+     profile) per leaf function, finding the value slot by name from pprof.main.meta instead of \
+     hard-coding value[N].",
+    "WITH m AS (SELECT file, default_sample_type AS sample_type, \
+     list_position([t.type FOR t IN sample_types], default_sample_type) AS slot \
+     FROM pprof.main.meta(['data/go_cpu.pb.gz', 'data/go_heap.pb.gz']) WHERE error IS NULL) \
+     SELECT s.file, m.sample_type, s.frame[1].function AS fn, sum(s.value[m.slot]) AS total \
+     FROM pprof.main.stacks(['data/go_cpu.pb.gz', 'data/go_heap.pb.gz']) s JOIN m USING (file) \
+     WHERE s.error IS NULL GROUP BY ALL ORDER BY s.file, total DESC, fn",
+);
+
+/// `samples` + `locations` + `mappings`: the hottest unsymbolized leaf
+/// addresses as (build_id, binary-relative offset) pairs — exactly what a
+/// downstream symbolizer needs.
+pub const EX_HOT_NATIVE_OFFSETS: (&str, &str) = (
+    "Hottest unsymbolized leaf addresses as symbolizer-ready (binary, build_id, offset in the \
+     binary) rows, weighted by CPU time: each sample's leaf location id is joined to \
+     pprof.main.locations and on to pprof.main.mappings.",
+    "SELECT m.filename AS binary_path, m.build_id, \
+     printf('0x%x', l.address - m.memory_start + m.file_offset) AS binary_offset, \
+     sum(s.value[2]) AS cpu_ns \
+     FROM pprof.main.samples('data/native.pb.gz') s \
+     JOIN pprof.main.locations('data/native.pb.gz') l ON l.location_id = s.location_ids[1] \
+     JOIN pprof.main.mappings('data/native.pb.gz') m ON m.mapping_id = l.mapping_id \
+     WHERE s.error IS NULL GROUP BY ALL ORDER BY cpu_ns DESC, binary_offset",
+);
+
+/// `locations` + `functions`: expand each multi-entry line table into the
+/// chain of functions the compiler inlined into one instruction address.
+pub const EX_INLINED_FRAMES: (&str, &str) = (
+    "Show what the compiler inlined: for every location whose line table has more than one \
+     entry, name each function folded into that address (depth 1 = innermost) by joining the \
+     line table to pprof.main.functions.",
+    "WITH l AS (SELECT location_id, address, unnest(lines) AS ln, \
+     generate_subscripts(lines, 1) AS depth \
+     FROM pprof.main.locations('data/go_heap.pb.gz') WHERE error IS NULL AND len(lines) > 1) \
+     SELECT l.location_id, l.address, l.depth, f.name AS function_name, f.filename, \
+     l.ln.line AS line \
+     FROM l JOIN pprof.main.functions('data/go_heap.pb.gz') f ON f.function_id = l.ln.function_id \
+     ORDER BY l.location_id, l.depth",
+);
+
+/// A composed example as the owned `(description, sql)` pair the example
+/// helpers take.
+pub fn example_pair(example: (&str, &str)) -> (String, String) {
+    (example.0.to_string(), example.1.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The composed examples feed JSON tags and the lint's per-object lists:
+    /// each must stay a single-line, catalog-qualified, ORDER BY'd statement.
+    #[test]
+    fn composed_examples_are_single_line_qualified_and_ordered() {
+        for (description, sql) in [
+            EX_DEFAULT_TYPE_BY_LEAF,
+            EX_HOT_NATIVE_OFFSETS,
+            EX_INLINED_FRAMES,
+        ] {
+            assert!(!description.trim().is_empty());
+            assert!(!sql.contains('\n'), "{sql}");
+            assert!(sql.contains("ORDER BY"), "{sql}");
+            assert!(!sql.contains("SELECT *"), "{sql}");
+            let qualified = sql.matches("pprof.main.").count();
+            assert!(
+                qualified >= 2,
+                "composed example must combine 2+ objects: {sql}"
+            );
+        }
+    }
+}

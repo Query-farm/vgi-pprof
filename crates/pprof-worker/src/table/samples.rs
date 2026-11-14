@@ -11,16 +11,21 @@ use crate::arrow_build as ab;
 use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
-const EXECUTABLE_EXAMPLES: &str = r#"[
-  {
-    "description": "Raw samples with their leaf location id.",
-    "sql": "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL"
-  },
-  {
-    "description": "Inspect the per-sample labels (e.g. a heap profile's size_class tag) carried alongside the values.",
-    "sql": "SELECT sample_id, labels, value FROM pprof.main.samples('data/alloc.pb.gz') WHERE error IS NULL LIMIT 5"
-  }
-]"#;
+/// The guaranteed-runnable examples (`vgi.executable_examples`), including the
+/// composed [`crate::meta::EX_HOT_NATIVE_OFFSETS`] (offline: it reads the committed fixtures).
+fn executable_examples() -> String {
+    crate::meta::example_queries_json(&[
+        crate::meta::example_pair((
+            "Raw samples with their leaf location id.",
+            "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL",
+        )),
+        crate::meta::example_pair((
+            "Inspect the per-sample labels (e.g. a heap profile's size_class tag) carried alongside the values.",
+            "SELECT sample_id, labels, value FROM pprof.main.samples('data/alloc.pb.gz') WHERE error IS NULL LIMIT 5",
+        )),
+        crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),
+    ])
+}
 
 pub struct Samples;
 
@@ -98,13 +103,16 @@ impl TableFunction for Samples {
             "vgi.result_columns_schema".into(),
             crate::meta::result_columns_schema(&cols),
         ));
-        tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
-        let (examples, example_queries) = crate::meta::described_examples(vec![(
-            "Raw samples with their leaf location id.".into(),
-            "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
+        tags.push(("vgi.executable_examples".into(), executable_examples()));
+        let (examples, example_queries) = crate::meta::described_examples(vec![
+            (
+                "Raw samples with their leaf location id.".into(),
+                "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
              pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
-                .into(),
-        )]);
+                    .into(),
+            ),
+            crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),
+        ]);
         tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
             description: "Decode a pprof profile's raw samples (location ids + values + labels)"

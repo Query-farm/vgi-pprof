@@ -1,0 +1,51 @@
+# name: test/sql/composed.test
+# group: [vgi_pprof]
+#
+# The composed examples published in the catalog (crates/pprof-worker/src/meta.rs
+# EX_*): each combines two or more pprof tables. They are pinned here against the
+# committed fixtures so the rows their descriptions promise can't drift. The SQL
+# matches the published examples except that fixture paths are absolute
+# (${VGI_PPROF_DATA}) because the runner cd's into a staging dir.
+
+require-env VGI_PPROF_WORKER
+
+require-env VGI_PPROF_DATA
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
+
+# EX_DEFAULT_TYPE_BY_LEAF (meta + stacks): the value slot is found by name, so a
+# CPU profile totals `cpu` (value[2]) and a heap profile `inuse_space` (value[4]).
+query TTTI
+WITH m AS (SELECT file, default_sample_type AS sample_type, list_position([t.type FOR t IN sample_types], default_sample_type) AS slot FROM pprof.main.meta(['${VGI_PPROF_DATA}/go_cpu.pb.gz', '${VGI_PPROF_DATA}/go_heap.pb.gz']) WHERE error IS NULL) SELECT replace(s.file, '${VGI_PPROF_DATA}/', '') AS file, m.sample_type, s.frame[1].function AS fn, sum(s.value[m.slot]) AS total FROM pprof.main.stacks(['${VGI_PPROF_DATA}/go_cpu.pb.gz', '${VGI_PPROF_DATA}/go_heap.pb.gz']) s JOIN m USING (file) WHERE s.error IS NULL GROUP BY ALL ORDER BY 1, total DESC, fn
+----
+go_cpu.pb.gz	cpu	main.hotLoop	30000000
+go_cpu.pb.gz	cpu	main.parse	5000000
+go_heap.pb.gz	inuse_space	main.makeBuf	409600
+
+# EX_HOT_NATIVE_OFFSETS (samples + locations + mappings): leaf address minus the
+# mapping's memory_start (+ file_offset) is the offset a symbolizer resolves.
+query TTTI
+SELECT m.filename AS binary_path, m.build_id, printf('0x%x', l.address - m.memory_start + m.file_offset) AS binary_offset, sum(s.value[2]) AS cpu_ns FROM pprof.main.samples('${VGI_PPROF_DATA}/native.pb.gz') s JOIN pprof.main.locations('${VGI_PPROF_DATA}/native.pb.gz') l ON l.location_id = s.location_ids[1] JOIN pprof.main.mappings('${VGI_PPROF_DATA}/native.pb.gz') m ON m.mapping_id = l.mapping_id WHERE s.error IS NULL GROUP BY ALL ORDER BY cpu_ns DESC, binary_offset
+----
+/opt/svc/bin/svc	a1b2c3d4e5f6	0x420	120000000
+/opt/svc/bin/svc	a1b2c3d4e5f6	0x8ab	70000000
+
+# EX_INLINED_FRAMES (locations + functions): go_heap's location 2 folds
+# main.makeBuf (innermost) into main.allocate at one address.
+query IIITTI
+WITH l AS (SELECT location_id, address, unnest(lines) AS ln, generate_subscripts(lines, 1) AS depth FROM pprof.main.locations('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL AND len(lines) > 1) SELECT l.location_id, l.address, l.depth, f.name AS function_name, f.filename, l.ln.line AS line FROM l JOIN pprof.main.functions('${VGI_PPROF_DATA}/go_heap.pb.gz') f ON f.function_id = l.ln.function_id ORDER BY l.location_id, l.depth
+----
+2	4198656	1	main.makeBuf	alloc.go	52
+2	4198656	2	main.allocate	alloc.go	33
+
+# Grader for the inclusive_cpu_by_build_id agent task (vgi-agent-tests.yaml):
+# sample 2 has two frames in the svc binary but counts once (190 ms, not 260 ms).
+query TI
+WITH hit AS (SELECT DISTINCT s.sample_id, s.value[2] AS cpu_ns, m.build_id FROM pprof.main.samples('${VGI_PPROF_DATA}/native.pb.gz') s, unnest(s.location_ids) AS u(location_id) JOIN pprof.main.locations('${VGI_PPROF_DATA}/native.pb.gz') l ON l.location_id = u.location_id JOIN pprof.main.mappings('${VGI_PPROF_DATA}/native.pb.gz') m ON m.mapping_id = l.mapping_id WHERE s.error IS NULL) SELECT build_id, sum(cpu_ns) AS cpu_ns FROM hit GROUP BY build_id ORDER BY build_id
+----
+a1b2c3d4e5f6	190000000
+deadbeefcafe	120000000

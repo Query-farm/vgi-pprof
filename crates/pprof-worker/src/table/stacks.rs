@@ -14,16 +14,21 @@ use crate::arrow_build as ab;
 use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
-const EXECUTABLE_EXAMPLES: &str = r#"[
-  {
-    "description": "Top self-time functions across a directory of CPU profiles.",
-    "sql": "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20"
-  },
-  {
-    "description": "Flatten one profile's stacks (leaf frame, values aligned to meta.sample_types).",
-    "sql": "SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL"
-  }
-]"#;
+/// The guaranteed-runnable examples (`vgi.executable_examples`), including the
+/// composed [`crate::meta::EX_DEFAULT_TYPE_BY_LEAF`] (offline: it reads the committed fixtures).
+fn executable_examples() -> String {
+    crate::meta::example_queries_json(&[
+        crate::meta::example_pair((
+            "Top self-time functions across a directory of CPU profiles.",
+            "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20",
+        )),
+        crate::meta::example_pair((
+            "Flatten one profile's stacks (leaf frame, values aligned to meta.sample_types).",
+            "SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL",
+        )),
+        crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
+    ])
+}
 
 pub struct Stacks;
 
@@ -110,7 +115,7 @@ impl TableFunction for Stacks {
             "vgi.result_columns_schema".into(),
             crate::meta::result_columns_schema(&cols),
         ));
-        tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
+        tags.push(("vgi.executable_examples".into(), executable_examples()));
         let (examples, example_queries) = crate::meta::described_examples(vec![
             (
                 "Flatten a profile passed inline as BLOB bytes (self-contained): each sample's \
@@ -131,6 +136,7 @@ impl TableFunction for Stacks {
                  GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
                     .into(),
             ),
+            crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
         ]);
         tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {
