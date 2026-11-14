@@ -1,0 +1,61 @@
+{
+  "query": "DESCRIBE SELECT * FROM pprof.main.samples('fixtures/baseline.pb.gz')",
+  "columns": [
+    "column_name",
+    "column_type",
+    "null",
+    "key",
+    "default",
+    "extra"
+  ],
+  "rows": [
+    [
+      "sample_id",
+      "BIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "location_ids",
+      "UBIGINT[]",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "value",
+      "BIGINT[]",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "labels",
+      "MAP(VARCHAR, VARCHAR)",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "file",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "error",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ]
+  ]
+}

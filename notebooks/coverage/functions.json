@@ -1,0 +1,257 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='pprof' ORDER BY schema_name,function_name,parameter_types",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "pprof",
+      "22592",
+      "main",
+      "functions",
+      null,
+      "table",
+      "Decode a pprof profile's function table",
+      null,
+      {
+        "vgi.category": "Raw profile graph",
+        "vgi.doc_llm": "Decode a pprof profile's function table: one row per function with `function_id` (verbatim), `name`, `system_name` (mangled), `filename`, and `start_line`. Join `function_id` from pprof.locations.lines to symbolize raw locations. `src` may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
+        "vgi.doc_md": "pprof functions: `function_id`, `name`, `system_name`, `filename`, `start_line`. Join `function_id` to `locations.lines[].function_id`.",
+        "vgi.example_queries": "[{\"description\":\"List the functions defined in a profile.\",\"sql\":\"SELECT function_id, name, filename, start_line FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"List the functions in a profile.\",\n    \"sql\": \"SELECT function_id, name, filename, start_line FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id LIMIT 10\"\n  },\n  {\n    \"description\": \"Which source files contribute the most symbols (functions) to a profile.\",\n    \"sql\": \"SELECT filename, count(*) AS fns FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY filename ORDER BY fns DESC, filename LIMIT 5\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"functions\",\"function table\",\"symbol\",\"name\",\"mangled\",\"system name\",\"filename\",\"start line\",\"symbolization\",\"join\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"function_id\",\"type\":\"UBIGINT\",\"description\":\"The function's unique id within the profile (verbatim); referenced by pprof.locations.lines[].function_id.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Human-readable function name, or NULL if unset.\"},{\"name\":\"system_name\",\"type\":\"VARCHAR\",\"description\":\"System/mangled function name (e.g. the C++ mangled symbol), or NULL if unset.\"},{\"name\":\"filename\",\"type\":\"VARCHAR\",\"description\":\"Source file that contains the function, or NULL if unset.\"},{\"name\":\"start_line\",\"type\":\"BIGINT\",\"description\":\"First source line of the function (0 if unknown).\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Functions Table"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22596,
+      [
+        "SELECT function_id, name, filename, start_line FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
+      ],
+      null,
+      []
+    ],
+    [
+      "pprof",
+      "22592",
+      "main",
+      "locations",
+      null,
+      "table",
+      "Decode a pprof profile's location table",
+      null,
+      {
+        "vgi.category": "Raw profile graph",
+        "vgi.doc_llm": "Decode a pprof profile's location table: one row per location with `location_id` (verbatim), `address`, `mapping_id`, and `lines` (a `LIST(STRUCT(function_id, line))`, innermost inlined frame first). Join `mapping_id` to pprof.mappings and `lines[].function_id` to pprof.functions to symbolize. `src` may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
+        "vgi.doc_md": "pprof locations: `location_id`, `address`, `mapping_id`, and `lines` (`STRUCT(function_id, line)[]`). Join `mapping_id` to `mappings`, `lines[].function_id` to `functions`.",
+        "vgi.example_queries": "[{\"description\":\"Locations with their line table (inlined frames).\",\"sql\":\"SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Locations with their line table (inlined frames).\",\n    \"sql\": \"SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id LIMIT 10\"\n  },\n  {\n    \"description\": \"The most heavily inlined locations (longest line table = deepest inlining the compiler folded into one address).\",\n    \"sql\": \"SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"locations\",\"location table\",\"address\",\"mapping id\",\"line table\",\"inlined frames\",\"function id\",\"symbolization\",\"join\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"location_id\",\"type\":\"UBIGINT\",\"description\":\"The location's unique id within the profile (verbatim); referenced by pprof.samples.location_ids.\"},{\"name\":\"address\",\"type\":\"UBIGINT\",\"description\":\"Instruction address for this location (0 if unavailable); within its mapping's memory range.\"},{\"name\":\"mapping_id\",\"type\":\"UBIGINT\",\"description\":\"Id of the pprof.mappings row this location belongs to (0 if unknown).\"},{\"name\":\"lines\",\"type\":\"STRUCT(function_id UBIGINT, line BIGINT)[]\",\"description\":\"The line table, innermost inlined frame first; function_id joins to pprof.functions.function_id. Empty for an unsymbolized location.\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Locations Table"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22597,
+      [
+        "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
+      ],
+      null,
+      []
+    ],
+    [
+      "pprof",
+      "22592",
+      "main",
+      "mappings",
+      null,
+      "table",
+      "Decode a pprof profile's mapping table (build_id feeds vgi-symbols)",
+      null,
+      {
+        "vgi.category": "Raw profile graph",
+        "vgi.doc_llm": "Decode a pprof profile's mapping table: one row per loaded binary/library with `mapping_id` (verbatim), the loaded address range (`memory_start`, `memory_limit`), `file_offset`, `filename`, and `build_id`. The `build_id` is emitted verbatim so the addresses of unsymbolized native frames flow to a symbolizer (vgi-symbols) for addr\u2192symbol resolution. `src` may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
+        "vgi.doc_md": "pprof mappings: `mapping_id`, `memory_start`, `memory_limit`, `file_offset`, `filename`, `build_id`. `build_id` feeds a downstream symbolizer.",
+        "vgi.example_queries": "[{\"description\":\"List the mappings that carry a build_id (the binaries still to symbolize), from a native profile passed inline as BLOB bytes.\",\"sql\":\"SELECT mapping_id, filename, build_id FROM pprof.main.mappings(from_base64('H4sIAAAAAAAA/+Ji4WAUYOJi4WAWYBHi5mDkYBLgEWiYM8dSiJuDmYNRgF2gYfcGRSkhDkaBhoaGFawSDQ0tK1g1WA3YpMQ4mEBiDQ0P5CUaGg6AaA12Aw4lLg5GAUaJBR0NK1iVeDiYBJgktiwBq1Li4mAWYJRYPbFhBasRgxF7cWJuQU5qsRFrcn5pXokRc3JBqRF3XmJefnFqcn5eSrGRgH5+QYl+cVmyflJmHog24kk0TDJKNk4xSTVNMzOS18/JTNKvsDCLNzPRzcnMK63QTc8rBQkm6xXn65kZ8aSkJqYkpaamJSempXo0NKzY+Hj+89PiAQ2ntr5jjAJ7OqFh7SOWAgZAAAAA//9plBkzCAEAAA==')) WHERE error IS NULL AND build_id IS NOT NULL;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Mappings with build ids (the addresses that still need symbolizing).\",\n    \"sql\": \"SELECT mapping_id, filename, build_id FROM pprof.main.mappings('data/native.pb.gz') WHERE error IS NULL AND build_id IS NOT NULL\"\n  },\n  {\n    \"description\": \"Every loaded binary/segment in a profile with its address range (memory_start .. memory_limit).\",\n    \"sql\": \"SELECT mapping_id, filename, memory_start, memory_limit FROM pprof.main.mappings('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY mapping_id\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"mappings\",\"mapping table\",\"build id\",\"build_id\",\"memory range\",\"file offset\",\"binary\",\"library\",\"vdso\",\"symbolization\",\"vgi-symbols\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"mapping_id\",\"type\":\"UBIGINT\",\"description\":\"The mapping's unique id within the profile (verbatim); referenced by pprof.locations.mapping_id.\"},{\"name\":\"memory_start\",\"type\":\"UBIGINT\",\"description\":\"Start of the address range the binary/library is loaded at.\"},{\"name\":\"memory_limit\",\"type\":\"UBIGINT\",\"description\":\"Exclusive end of the loaded address range.\"},{\"name\":\"file_offset\",\"type\":\"UBIGINT\",\"description\":\"Offset in the object file that corresponds to memory_start.\"},{\"name\":\"filename\",\"type\":\"VARCHAR\",\"description\":\"Object the mapping is loaded from (a path, or a pseudo-name like '[vdso]'); NULL if unset.\"},{\"name\":\"build_id\",\"type\":\"VARCHAR\",\"description\":\"Build id uniquely identifying the binary version, emitted verbatim so unresolved native frames can be symbolized downstream (vgi-symbols); NULL if unset.\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Mappings Table"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22598,
+      [
+        "SELECT mapping_id, filename, build_id FROM pprof.main.mappings(from_base64('H4sIAAAAAAAA/+Ji4WAUYOJi4WAWYBHi5mDkYBLgEWiYM8dSiJuDmYNRgF2gYfcGRSkhDkaBhoaGFawSDQ0tK1g1WA3YpMQ4mEBiDQ0P5CUaGg6AaA12Aw4lLg5GAUaJBR0NK1iVeDiYBJgktiwBq1Li4mAWYJRYPbFhBasRgxF7cWJuQU5qsRFrcn5pXokRc3JBqRF3XmJefnFqcn5eSrGRgH5+QYl+cVmyflJmHog24kk0TDJKNk4xSTVNMzOS18/JTNKvsDCLNzPRzcnMK63QTc8rBQkm6xXn65kZ8aSkJqYkpaamJSempXo0NKzY+Hj+89PiAQ2ntr5jjAJ7OqFh7SOWAgZAAAAA//9plBkzCAEAAA==')) WHERE error IS NULL AND build_id IS NOT NULL;"
+      ],
+      null,
+      []
+    ],
+    [
+      "pprof",
+      "22592",
+      "main",
+      "meta",
+      null,
+      "table",
+      "Decode a pprof profile's metadata (sample types, period, duration)",
+      null,
+      {
+        "vgi.category": "Profile metadata",
+        "vgi.doc_llm": "Decode a pprof profile's metadata into one row: `sample_types` (a `LIST(STRUCT(type, unit))` describing each value slot), `period`, `period_type` (a `STRUCT(type, unit)`), `duration_nanos`, `time_nanos`, and `default_sample_type`. Use `sample_types` to interpret the `value` list in pprof.stacks / pprof.samples (the Nth type names value[N]). `src` may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
+        "vgi.doc_md": "pprof profile metadata (one row): `sample_types` (`STRUCT(type, unit)[]`), `period`, `period_type` (`STRUCT(type, unit)`), `duration_nanos`, `time_nanos`, `default_sample_type`. `sample_types` names the `value` slots.",
+        "vgi.example_queries": "[{\"description\":\"Inspect a heap profile's sample value types and duration, from a profile passed inline as BLOB bytes.\",\"sql\":\"SELECT sample_types, period, duration_nanos, default_sample_type FROM pprof.main.meta(from_base64('H4sIAAAAAAAA/zyMMU6EQBSGndlh9+0A+rKJES0MUhEKSV4sLI2VZ7DRAUeDIhCBwu7dRGNl6w3sPYaF1zAMxmbyzf++fFqBQKkVLFBpBZ7jJarNNkgQG7hhPkuZ9w8QBDKzjJg/Zbo6FckOCBQRv7JMpkiQ7IKchjc3LPAkUSDxKNMgECKI16nONEjUkY799DDTsMAgCmI/Jdqi0NR1W161xb0th568sh2bgfx57TtTWvKK58H2FFbN2Nt/05+/s7LJx/4pr9vS1HlRNbnpOlo/mqo5nh5aObxrKXTg4mawBI6mQ/AnP9jz8ZY8V71gfv/4fvn52rtUEKK6Zo675W8AAAD//wt6pw46AQAA')) WHERE error IS NULL;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"The sample types and duration of a profile.\",\n    \"sql\": \"SELECT sample_types, duration_nanos, default_sample_type FROM pprof.main.meta('data/go_heap.pb.gz') WHERE error IS NULL\"\n  },\n  {\n    \"description\": \"The sampling period and what it counts (read this to convert raw counts to time), plus the wall-clock duration covered.\",\n    \"sql\": \"SELECT period, period_type, duration_nanos FROM pprof.main.meta('data/go_cpu.pb.gz') WHERE error IS NULL\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"meta\",\"metadata\",\"sample types\",\"sample_type\",\"period\",\"period type\",\"duration\",\"time\",\"default sample type\",\"value types\",\"profiling\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"sample_types\",\"type\":\"STRUCT(type VARCHAR, unit VARCHAR)[]\",\"description\":\"The value types each sample carries, in order; the Nth entry names value[N] in pprof.stacks / pprof.samples.\"},{\"name\":\"period\",\"type\":\"BIGINT\",\"description\":\"Number of events between sampled occurrences (the sampling period).\"},{\"name\":\"period_type\",\"type\":\"STRUCT(type VARCHAR, unit VARCHAR)\",\"description\":\"The kind of event the period counts (e.g. (cpu, nanoseconds)); NULL if unset.\"},{\"name\":\"duration_nanos\",\"type\":\"BIGINT\",\"description\":\"Wall-clock duration the profile covers, in nanoseconds (0 if not meaningful).\"},{\"name\":\"time_nanos\",\"type\":\"BIGINT\",\"description\":\"Collection time as nanoseconds since the Unix epoch (0 if unset).\"},{\"name\":\"default_sample_type\",\"type\":\"VARCHAR\",\"description\":\"The preferred sample value type's name; NULL if unset.\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Profile Metadata"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22599,
+      [
+        "SELECT sample_types, period, duration_nanos, default_sample_type FROM pprof.main.meta(from_base64('H4sIAAAAAAAA/zyMMU6EQBSGndlh9+0A+rKJES0MUhEKSV4sLI2VZ7DRAUeDIhCBwu7dRGNl6w3sPYaF1zAMxmbyzf++fFqBQKkVLFBpBZ7jJarNNkgQG7hhPkuZ9w8QBDKzjJg/Zbo6FckOCBQRv7JMpkiQ7IKchjc3LPAkUSDxKNMgECKI16nONEjUkY799DDTsMAgCmI/Jdqi0NR1W161xb0th568sh2bgfx57TtTWvKK58H2FFbN2Nt/05+/s7LJx/4pr9vS1HlRNbnpOlo/mqo5nh5aObxrKXTg4mawBI6mQ/AnP9jz8ZY8V71gfv/4fvn52rtUEKK6Zo675W8AAAD//wt6pw46AQAA')) WHERE error IS NULL;"
+      ],
+      null,
+      []
+    ],
+    [
+      "pprof",
+      "22592",
+      "main",
+      "samples",
+      null,
+      "table",
+      "Decode a pprof profile's raw samples (location ids + values + labels)",
+      null,
+      {
+        "vgi.category": "Raw profile graph",
+        "vgi.doc_llm": "Decode a pprof profile's raw samples: one row per sample with `location_ids` (a `LIST(UBIGINT)`, leaf first), `value` (a `LIST(BIGINT)` aligned to meta.sample_types), and `labels` (a `MAP`). No resolution is applied \u2014 join `location_ids` to pprof.locations and onward to pprof.functions, or use pprof.stacks for the pre-resolved view. `src` may be a path, glob, list, or `BLOB`; a bad file yields one error row.",
+        "vgi.doc_md": "Raw pprof samples: `sample_id`, `location_ids` (`UBIGINT[]`, leaf first), `value` (`BIGINT[]`), and `labels` (a `MAP`). Join `location_ids` to `locations`, or use `stacks` for resolved frames.",
+        "vgi.example_queries": "[{\"description\":\"Raw samples with their leaf location id.\",\"sql\":\"SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Raw samples with their leaf location id.\",\n    \"sql\": \"SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL\"\n  },\n  {\n    \"description\": \"Inspect the per-sample labels (e.g. a heap profile's size_class tag) carried alongside the values.\",\n    \"sql\": \"SELECT sample_id, labels, value FROM pprof.main.samples('data/alloc.pb.gz') WHERE error IS NULL LIMIT 5\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"samples\",\"raw samples\",\"location ids\",\"values\",\"labels\",\"stack\",\"profiling\",\"join\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"sample_id\",\"type\":\"BIGINT\",\"description\":\"1-based index of the sample within its profile; joins to pprof.stacks.sample_id.\"},{\"name\":\"location_ids\",\"type\":\"UBIGINT[]\",\"description\":\"The sample's location ids, leaf first; each joins to pprof.locations.location_id.\"},{\"name\":\"value\",\"type\":\"BIGINT[]\",\"description\":\"The sample's measured values, one BIGINT per meta.sample_types entry, in order.\"},{\"name\":\"labels\",\"type\":\"MAP(VARCHAR, VARCHAR)\",\"description\":\"Sample labels; duplicate keys are de-duplicated (first wins).\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Raw Samples"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22600,
+      [
+        "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
+      ],
+      null,
+      []
+    ],
+    [
+      "pprof",
+      "22592",
+      "main",
+      "stacks",
+      null,
+      "table",
+      "Flatten a pprof profile into flamegraph-ready stack rows",
+      null,
+      {
+        "vgi.category": "Flattened stacks",
+        "vgi.doc_llm": "Flatten a pprof profile into one row per sample with the call stack pre-resolved: `value` is a `LIST(BIGINT)` aligned to meta.sample_types, `labels` is a `MAP(VARCHAR, VARCHAR)`, and `frame` is a `LIST(STRUCT(function, filename, line, address))` ordered leaf-first (inlined frames expanded, unsymbolized frames keep their address). This is the 90% view: a flamegraph diff across many profiles is a GROUP BY frame \u2026 SUM(value) with no manual location/function join. `src` may be a file path, a glob, a list of paths, or inline `BLOB` bytes; a bad file yields one error row.",
+        "vgi.doc_md": "Flatten a pprof profile into flamegraph-ready rows: `sample_id`, `value` (a `LIST(BIGINT)` aligned to the sample types), `labels` (a `MAP`), and `frame` (a `LIST(STRUCT(function, filename, line, address))`, leaf first). Use it to diff profiles in SQL.",
+        "vgi.example_queries": "[{\"description\":\"Flatten a profile passed inline as BLOB bytes (self-contained): each sample's leaf frame and per-type values.\",\"sql\":\"SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks(from_base64('H4sIAAAAAAAA/yzQPU7rQBAH8Lcfjidr63kUIbAokOXKchFLW3EECgpqKoyJQkTiXWUT0U7HBRAtCCGgocgN0nMFKigouATaFc1/Zn4z1SgJDLmSIFCOUiUEZ3iAdPPyf5SA30W4vdvwfQSGRMRzoi2vokNWZsCQ5fRAvPR3aZkB9/AYgONumYHw8BRAYF1mID08B5AY1woYDvJBEVeqVsARciiG1U6tQKDKVTGsqlqBxCRPirSK9D8du3Zh5xOno86s+5UWnV3rpG974yad6S+cHjVrt2zmpmvnzfmsb1pr9XDRzvqxDx2Hdmr+7Nosr3Ts01sa7NKsjo2xWoXJtks30RDKeGqOiF43X/ff73sndPvzIU7D687o7VNa8RsAAP//CRIJN04BAAA=')) WHERE error IS NULL;\"},{\"description\":\"Top self-time functions in a CPU profile (value[2] = cpu/nanoseconds), read from a file path.\",\"sql\":\"SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;\"}]",
+        "vgi.executable_examples": "[\n  {\n    \"description\": \"Top self-time functions across a directory of CPU profiles.\",\n    \"sql\": \"SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20\"\n  },\n  {\n    \"description\": \"Flatten one profile's stacks (leaf frame, values aligned to meta.sample_types).\",\n    \"sql\": \"SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL\"\n  }\n]",
+        "vgi.keywords": "[\"pprof\",\"stacks\",\"flamegraph\",\"stack trace\",\"profile diff\",\"regression\",\"self time\",\"cpu\",\"flatten\",\"frames\",\"leaf\",\"samples\",\"profiling\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"sample_id\",\"type\":\"BIGINT\",\"description\":\"1-based index of the sample within its profile; joins to pprof.samples.sample_id.\"},{\"name\":\"value\",\"type\":\"BIGINT[]\",\"description\":\"The sample's measured values, one BIGINT per meta.sample_types entry, in that order (e.g. value[2] is cpu/nanoseconds for a Go CPU profile).\"},{\"name\":\"labels\",\"type\":\"MAP(VARCHAR, VARCHAR)\",\"description\":\"Sample labels; duplicate keys are de-duplicated (first wins).\"},{\"name\":\"frame\",\"type\":\"STRUCT(function VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[]\",\"description\":\"The call stack, leaf first; inlined frames expanded, unsymbolized frames keep their address. frame[1] is the leaf (self) frame.\"},{\"name\":\"file\",\"type\":\"VARCHAR\",\"description\":\"Source path the row came from (NULL when the profile was passed as inline BLOB bytes).\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"NULL on success; otherwise this is an error row for a file that could not be read or decoded, with every data column NULL and the failure message here.\"}]",
+        "vgi.title": "Flattened Stacks (headline)"
+      },
+      null,
+      [
+        "src"
+      ],
+      [
+        "ANY"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22601,
+      [
+        "SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks(from_base64('H4sIAAAAAAAA/yzQPU7rQBAH8Lcfjidr63kUIbAokOXKchFLW3EECgpqKoyJQkTiXWUT0U7HBRAtCCGgocgN0nMFKigouATaFc1/Zn4z1SgJDLmSIFCOUiUEZ3iAdPPyf5SA30W4vdvwfQSGRMRzoi2vokNWZsCQ5fRAvPR3aZkB9/AYgONumYHw8BRAYF1mID08B5AY1woYDvJBEVeqVsARciiG1U6tQKDKVTGsqlqBxCRPirSK9D8du3Zh5xOno86s+5UWnV3rpG974yad6S+cHjVrt2zmpmvnzfmsb1pr9XDRzvqxDx2Hdmr+7Nosr3Ts01sa7NKsjo2xWoXJtks30RDKeGqOiF43X/ff73sndPvzIU7D687o7VNa8RsAAP//CRIJN04BAAA=')) WHERE error IS NULL;",
+        "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
+      ],
+      null,
+      []
+    ]
+  ]
+}

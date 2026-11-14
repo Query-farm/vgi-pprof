@@ -1,0 +1,77 @@
+{
+  "query": "DESCRIBE SELECT * FROM pprof.main.meta('fixtures/baseline.pb.gz')",
+  "columns": [
+    "column_name",
+    "column_type",
+    "null",
+    "key",
+    "default",
+    "extra"
+  ],
+  "rows": [
+    [
+      "sample_types",
+      "STRUCT(\"type\" VARCHAR, unit VARCHAR)[]",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "period",
+      "BIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "period_type",
+      "STRUCT(\"type\" VARCHAR, unit VARCHAR)",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "duration_nanos",
+      "BIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "time_nanos",
+      "BIGINT",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "default_sample_type",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "file",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ],
+    [
+      "error",
+      "VARCHAR",
+      "YES",
+      null,
+      null,
+      null
+    ]
+  ]
+}

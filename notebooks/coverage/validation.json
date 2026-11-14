@@ -1,0 +1,523 @@
+{
+  "schema_version": 1,
+  "status": "met",
+  "meets_target": true,
+  "catalogs": {
+    "released": {
+      "catalog_status": "verified",
+      "revision": "v0.4.0",
+      "catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+      "collection_reconciled": true,
+      "denominator": 7,
+      "observed_objects": 7,
+      "required": 7,
+      "verified_count": 7,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 7,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "functions"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "locations"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mappings"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "meta"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "sample_type_guide"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "samples"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "stacks"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "functions",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "functions(src ANY) -> TABLE(function_id UBIGINT, name VARCHAR, system_name VARCHAR, filename VARCHAR, start_line BIGINT, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "locations",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "locations(src ANY) -> TABLE(location_id UBIGINT, address UBIGINT, mapping_id UBIGINT, lines STRUCT(function_id UBIGINT, line BIGINT)[], file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mappings",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "mappings(src ANY) -> TABLE(mapping_id UBIGINT, memory_start UBIGINT, memory_limit UBIGINT, file_offset UBIGINT, filename VARCHAR, build_id VARCHAR, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "meta",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "meta(src ANY) -> TABLE(sample_types STRUCT(\"type\" VARCHAR, unit VARCHAR)[], period BIGINT, period_type STRUCT(\"type\" VARCHAR, unit VARCHAR), duration_nanos BIGINT, time_nanos BIGINT, default_sample_type VARCHAR, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "sample_type_guide",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "VIEW(producer VARCHAR, profile_kind VARCHAR, value_index INTEGER, sample_type VARCHAR, unit VARCHAR, meaning VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "samples",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "samples(src ANY) -> TABLE(sample_id BIGINT, location_ids UBIGINT[], value BIGINT[], labels MAP(VARCHAR, VARCHAR), file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "stacks",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "stacks(src ANY) -> TABLE(sample_id BIGINT, value BIGINT[], labels MAP(VARCHAR, VARCHAR), frame STRUCT(\"function\" VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[], file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    "current": {
+      "catalog_status": "verified",
+      "revision": "863cddded49517068fcbb76582d8bc0832fc2352",
+      "catalog_sha256": "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d",
+      "collection_reconciled": true,
+      "denominator": 7,
+      "observed_objects": 7,
+      "required": 7,
+      "verified_count": 7,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 0,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "functions"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "locations"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mappings"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "meta"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "sample_type_guide"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "samples"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "stacks"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "functions",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "functions(src ANY) -> TABLE(function_id UBIGINT, name VARCHAR, system_name VARCHAR, filename VARCHAR, start_line BIGINT, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "locations",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "locations(src ANY) -> TABLE(location_id UBIGINT, address UBIGINT, mapping_id UBIGINT, lines STRUCT(function_id UBIGINT, line BIGINT)[], file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "mappings",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "mappings(src ANY) -> TABLE(mapping_id UBIGINT, memory_start UBIGINT, memory_limit UBIGINT, file_offset UBIGINT, filename VARCHAR, build_id VARCHAR, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "meta",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "meta(src ANY) -> TABLE(sample_types STRUCT(\"type\" VARCHAR, unit VARCHAR)[], period BIGINT, period_type STRUCT(\"type\" VARCHAR, unit VARCHAR), duration_nanos BIGINT, time_nanos BIGINT, default_sample_type VARCHAR, file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "sample_type_guide",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [
+            "VIEW(producer VARCHAR, profile_kind VARCHAR, value_index INTEGER, sample_type VARCHAR, unit VARCHAR, meaning VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "samples",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "samples(src ANY) -> TABLE(sample_id BIGINT, location_ids UBIGINT[], value BIGINT[], labels MAP(VARCHAR, VARCHAR), file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "stacks",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "stacks(src ANY) -> TABLE(sample_id BIGINT, value BIGINT[], labels MAP(VARCHAR, VARCHAR), frame STRUCT(\"function\" VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[], file VARCHAR, error VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    }
+  },
+  "interface_drift": {
+    "known": true,
+    "current_only": [],
+    "released_only": [],
+    "changed": []
+  },
+  "notebooks": {
+    "01_compare_profiles_on_a_declared_basis.ipynb": {
+      "verified": true,
+      "issues": []
+    }
+  },
+  "examples": [
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "meta"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "stacks"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "sample_type_guide"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "samples"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "locations"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "mappings"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "functions"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc"
+    }
+  ],
+  "issues": []
+}

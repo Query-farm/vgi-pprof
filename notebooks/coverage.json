@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "catalog_sha256": "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+        "notes": "Actual six table functions plus one public sample_type_guide view: seven logical surfaces, no exclusions. Complete current/release signatures and output schemas agree. Current source changes metadata/composed examples only; decoder/dependency trees unchanged. All read supplied capture bytes or fixed vocabulary. Notebook runtime is the released binary; compatible current mappings do not claim exact current notebook execution."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "catalog_sha256": "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d",
+        "notes": "Actual six table functions plus one public sample_type_guide view: seven logical surfaces, no exclusions. Complete current/release signatures and output schemas agree. Current source changes metadata/composed examples only; decoder/dependency trees unchanged. All read supplied capture bytes or fixed vocabulary. Notebook runtime is the released binary; compatible current mappings do not claim exact current notebook execution."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "e94e84f06922609f2400e47dbed22b2bb5c45de2f370c09284f215a641419df6"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "meta"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "inventory-query",
+          "reference": "pprof.main.meta"
+        }
+      ],
+      "narrative_cells": [
+        "inventory-story",
+        "metric-story"
+      ],
+      "result_cells": [
+        "inventory-query",
+        "metric-query",
+        "guide-finding"
+      ],
+      "interpretation_cells": [
+        "guide-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Use file-declared metric types/units and duration while preserving an invalid input independently of authored operations.",
+        "finding": "Two valid captures declare reversed count/CPU slots; selecting CPU by metadata gives130ms/190ms. Broken input remains an error, not a zero cohort. Durations1s/2s do not supply authored operation counts100/200."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "stacks"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "inventory-query",
+          "reference": "pprof.main.stacks"
+        }
+      ],
+      "narrative_cells": [
+        "leaf-story",
+        "difference-story"
+      ],
+      "result_cells": [
+        "parts-chart",
+        "delta-chart"
+      ],
+      "interpretation_cells": [
+        "parts-chart",
+        "delta-chart"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Attribute each sample exactly once to its leaf, retaining unknown symbols and both sides of a profile comparison.",
+        "finding": "Default totals1.30/0.95ms per operation yield\u22120.35; whole-capture basis130/190ms yields+60. Unknown leaves and baseline-only legacy/candidate-only new_cache remain visible. Expanded inclusive frames would double these authored totals."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "sample_type_guide"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "guide-query",
+          "reference": "pprof.main.sample_type_guide"
+        }
+      ],
+      "narrative_cells": [
+        "guide-story",
+        "metric-story"
+      ],
+      "result_cells": [
+        "guide-finding"
+      ],
+      "interpretation_cells": [
+        "guide-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Compare a documented producer convention against each authored file\u2019s actual metric-slot order.",
+        "finding": "Two of four slot positions match the common Go CPU convention. Candidate deliberately reverses the slots; file metadata remains authoritative. The reference does not establish producer identity or operation counts."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "samples"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "addresses-query",
+          "reference": "pprof.main.samples"
+        }
+      ],
+      "narrative_cells": [
+        "addresses-story",
+        "graph-story"
+      ],
+      "result_cells": [
+        "addresses-query",
+        "graph-query",
+        "graph-finding"
+      ],
+      "interpretation_cells": [
+        "graph-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Preserve original file-scoped sample IDs while following leaf location references through the raw graph.",
+        "finding": "Eight valid samples retain unique(file,sample_id) identities. Six named leaves reconstruct from function IDs; two address-only leaves remain NULL. Same numeric IDs across files must not cross-join."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "locations"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "addresses-query",
+          "reference": "pprof.main.locations"
+        }
+      ],
+      "narrative_cells": [
+        "addresses-story",
+        "graph-story"
+      ],
+      "result_cells": [
+        "addresses-query",
+        "graph-query",
+        "graph-finding"
+      ],
+      "interpretation_cells": [
+        "graph-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Link raw leaf IDs to addresses, mapping IDs and ordered line references without dropping unsymbolized locations.",
+        "finding": "Address-only leaves yield two build-specific offset96 handoffs; empty line lists preserve unknown names. Fixture locations have at most one line entry; general inline profiles require the full ordered list."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "mappings"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "addresses-query",
+          "reference": "pprof.main.mappings"
+        }
+      ],
+      "narrative_cells": [
+        "addresses-story"
+      ],
+      "result_cells": [
+        "addresses-query",
+        "address-finding"
+      ],
+      "interpretation_cells": [
+        "address-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Retain each unsymbolized leaf\u2019s build identity and binary-relative offset for a later matching-binary lookup.",
+        "finding": "Both unknown leaves have offset96 but distinct baseline/candidate build IDs. Equal offsets across builds do not identify the same code; no matching binary or invented symbol is supplied."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "functions"
+      },
+      "notebook": "01_compare_profiles_on_a_declared_basis.ipynb",
+      "sql": [
+        {
+          "cell": "graph-query",
+          "reference": "pprof.main.functions"
+        }
+      ],
+      "narrative_cells": [
+        "graph-story",
+        "difference-story"
+      ],
+      "result_cells": [
+        "graph-query",
+        "graph-finding"
+      ],
+      "interpretation_cells": [
+        "graph-finding"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_earthquakes",
+        "reviewed_at": "2026-11-14T20:27:55.266334+00:00",
+        "notebook_sha256": "b8f5e4f05552aac95462b156e18347f9ac21985887457e038456f36e227e34c2",
+        "catalog_sha256": [
+          "9d4dc1010c720f4bcfe11591723d3c013f2d1ff55335a350d8b07b4e10cc70fc",
+          "0f7b2dab69c13a62a8b4394504538b38702028026d9bacaaae875d28dd98a85d"
+        ],
+        "purpose": "Reconstruct names from file-scoped function IDs and distinguish defined symbols from observed leaf samples.",
+        "finding": "Six graph names match flattened leaves and two unknown leaves stay NULL. Both legacy/new_cache definitions exist in both files even when their observed leaf count is zero. Broken file stays an error row in the function projection."
+      }
+    }
+  ]
+}

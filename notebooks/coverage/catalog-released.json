@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-pprof",
+  "revision": "v0.4.0",
+  "captured_at": "2026-11-14T20:23:18.275869+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/functions.json",
+      "sha256": "889d5ba586b6ee1bc80afc4983d935ba41d6fbee6b936a446040ef8d85f4c241",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/tables.json",
+      "sha256": "9a5388b8aaf8eb0ac4ac5c1d0db8f3b411a1ab51b617404621af0fa4bde1ca57",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/views.json",
+      "sha256": "e600bd6238872bfad2c5045dfad21a555fd8bc19a51a40f0a03341d9d61eb485",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/arguments.json",
+      "sha256": "57f59a0fadf2d077eefa79fe29205303f3e71d8790027c5400eab90c61724a86",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/catalog-metadata.json",
+      "sha256": "7b834ff24cd6c1a536997b8558fccadfdcf8fc797394ab4c3dfa307417771717",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/view-columns.json",
+      "sha256": "38a6f268c2b6c01e547ac096caab88b98d9b065ca638e98828e42a81899c75fd",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/stacks-columns.json",
+      "sha256": "1d0087a0aea26b743cb28afffd3795eeb3bd4c84bcd8dd6c21d95977b745b979",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/samples-columns.json",
+      "sha256": "0b064237030f901738a8478c33cb6beba84d8db417756f57ba6a3e0bdc09a714",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/functions-columns.json",
+      "sha256": "002b4bb0a3d35ac89b6732ce4e255ae287e2bbcebde9b152f6cca75b5149f027",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/locations-columns.json",
+      "sha256": "4989217a86fedec6b3ed02546e5ccea598481fdaa536bd3e20d9c278d7c5d767",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/mappings-columns.json",
+      "sha256": "49af3e7d15d49ef8c9e27ccdaf77934b18a2f4ffca4435fd39553bf07210d0fc",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/meta-columns.json",
+      "sha256": "b5ed88804ec2653019308e6475d0503005396aa9dd10c7c03a21bf13826ca1b0",
+      "description": "Complete worker-filtered runtime export or full output-column DESCRIBE"
+    },
+    {
+      "path": "coverage/source-compatibility.json",
+      "sha256": "fdc1cd04ed398587386ffee3f1d92d1334a3e0cbc7cbc62596824612a32f58d5",
+      "description": "Reviewed metadata-only main diff and existing green source CI"
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "functions",
+      "kind": "function",
+      "signatures": [
+        "functions(src ANY) -> TABLE(function_id UBIGINT, name VARCHAR, system_name VARCHAR, filename VARCHAR, start_line BIGINT, file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "locations",
+      "kind": "function",
+      "signatures": [
+        "locations(src ANY) -> TABLE(location_id UBIGINT, address UBIGINT, mapping_id UBIGINT, lines STRUCT(function_id UBIGINT, line BIGINT)[], file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "mappings",
+      "kind": "function",
+      "signatures": [
+        "mappings(src ANY) -> TABLE(mapping_id UBIGINT, memory_start UBIGINT, memory_limit UBIGINT, file_offset UBIGINT, filename VARCHAR, build_id VARCHAR, file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "meta",
+      "kind": "function",
+      "signatures": [
+        "meta(src ANY) -> TABLE(sample_types STRUCT(\"type\" VARCHAR, unit VARCHAR)[], period BIGINT, period_type STRUCT(\"type\" VARCHAR, unit VARCHAR), duration_nanos BIGINT, time_nanos BIGINT, default_sample_type VARCHAR, file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "samples",
+      "kind": "function",
+      "signatures": [
+        "samples(src ANY) -> TABLE(sample_id BIGINT, location_ids UBIGINT[], value BIGINT[], labels MAP(VARCHAR, VARCHAR), file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "stacks",
+      "kind": "function",
+      "signatures": [
+        "stacks(src ANY) -> TABLE(sample_id BIGINT, value BIGINT[], labels MAP(VARCHAR, VARCHAR), frame STRUCT(\"function\" VARCHAR, filename VARCHAR, line BIGINT, address UBIGINT)[], file VARCHAR, error VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "sample_type_guide",
+      "kind": "table",
+      "signatures": [
+        "VIEW(producer VARCHAR, profile_kind VARCHAR, value_index INTEGER, sample_type VARCHAR, unit VARCHAR, meaning VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    }
+  ],
+  "runtime": "Haybarn2.0.0rc11",
+  "launch": "github-auto://Query-farm/vgi-pprof@v0.4.0",
+  "review_notes": "Six table functions and one public view give seven logical surfaces. Path/glob/list/BLOB input forms count as one named surface each. All read supplied capture bytes or fixed vocabulary; no external writes/authentication/exclusions. Complete registrations and output columns reviewed."
+}

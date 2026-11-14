@@ -1,0 +1,44 @@
+{
+  "query": "SELECT * FROM duckdb_views() WHERE database_name='pprof' ORDER BY schema_name,view_name",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "schema_oid",
+    "view_name",
+    "view_oid",
+    "comment",
+    "tags",
+    "internal",
+    "temporary",
+    "column_count",
+    "sql",
+    "is_bound"
+  ],
+  "rows": [
+    [
+      "pprof",
+      22592,
+      "main",
+      22793,
+      "sample_type_guide",
+      22794,
+      "Reference table of common pprof sample value-type conventions: which sample_type and unit each value[N] slot carries per (producer, profile_kind). VALUES-backed, so it scans with no file or credential.",
+      {
+        "domain": "observability",
+        "topic": "pprof-profiles",
+        "vgi.category": "Profile metadata",
+        "vgi.doc_llm": "A browsable reference table mapping common pprof `(producer, profile_kind, value_index)` conventions to the `sample_type` and `unit` that each `value[N]` slot carries \u2014 e.g. for a Go 'cpu' profile value[1] is samples/count and value[2] is cpu/nanoseconds. Read it to know which `value` index to sum in pprof.stacks / pprof.samples without decoding a file first; the authoritative per-profile answer is pprof.meta(src).sample_types. Backed by a VALUES list, so it scans with no file, network, or credential.",
+        "vgi.doc_md": "Reference table of common pprof sample value-type conventions: `producer`, `profile_kind`, `value_index`, `sample_type`, `unit`, `meaning`. Tells you which `value[N]` slot to read (e.g. Go CPU time is value[2], nanoseconds).",
+        "vgi.example_queries": "[{\"description\":\"Look up which value slot holds CPU time for a Go CPU profile (and in what unit).\",\"sql\":\"SELECT value_index, sample_type, unit FROM pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' ORDER BY value_index\"}]",
+        "vgi.keywords": "[\"pprof\",\"sample type\",\"sample_type\",\"value index\",\"cpu\",\"nanoseconds\",\"alloc\",\"heap\",\"inuse\",\"mutex\",\"block\",\"contentions\",\"delay\",\"units\",\"reference\",\"guide\",\"conventions\"]",
+        "vgi.title": "pprof Value-Slot Reference"
+      },
+      false,
+      false,
+      null,
+      "CREATE VIEW sample_type_guide AS SELECT * FROM (SELECT * FROM (VALUES ('Go', 'cpu', 1, 'samples', 'count', 'Number of CPU samples that landed on this stack'), ('Go', 'cpu', 2, 'cpu', 'nanoseconds', 'CPU time attributed to this stack'), ('Go', 'heap', 1, 'alloc_objects', 'count', 'Objects allocated since the process started'), ('Go', 'heap', 2, 'alloc_space', 'bytes', 'Bytes allocated since the process started'), ('Go', 'heap', 3, 'inuse_objects', 'count', 'Objects still live at profile time'), ('Go', 'heap', 4, 'inuse_space', 'bytes', 'Bytes still live at profile time'), ('Go', 'allocs', 1, 'alloc_objects', 'count', 'Objects allocated since the process started'), ('Go', 'allocs', 2, 'alloc_space', 'bytes', 'Bytes allocated since the process started'), ('Go', 'block', 1, 'contentions', 'count', 'Blocking events observed'), ('Go', 'block', 2, 'delay', 'nanoseconds', 'Time spent blocked'), ('Go', 'mutex', 1, 'contentions', 'count', 'Mutex contention events observed'), ('Go', 'mutex', 2, 'delay', 'nanoseconds', 'Time spent waiting on the mutex')) AS valueslist) AS t(producer, profile_kind, value_index, sample_type, unit, meaning);",
+      false
+    ]
+  ]
+}
