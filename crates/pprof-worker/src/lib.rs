@@ -15,10 +15,11 @@
 //! ATTACH 'pprof' (TYPE vgi, LOCATION './target/release/pprof-worker');
 //! SET search_path = 'pprof.main';
 //!
-//! -- top self-time functions across a directory of CPU profiles
-//! SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns
-//! FROM glob('/profiles/*.pb.gz') f, pprof.stacks(f.path) s
-//! WHERE s.error IS NULL
+//! -- top self-time functions across a directory of CPU profiles (the source
+//! -- may be a path, a glob, a list of paths, or inline BLOB bytes)
+//! SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns
+//! FROM pprof.stacks('/profiles/*.pb.gz')
+//! WHERE error IS NULL
 //! GROUP BY 1 ORDER BY 2 DESC LIMIT 20;
 //! ```
 //!
@@ -190,16 +191,20 @@ fn catalog_metadata(name: &str) -> CatalogModel {
             // VGI151/VGI506 representative example queries at the catalog level.
             (
                 "vgi.example_queries".to_string(),
-                "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns \
-                 FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s \
-                 WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;\n\
-                 SELECT sample_types, period, duration_nanos \
-                 FROM pprof.main.meta('data/go_cpu.pb.gz') WHERE error IS NULL;\n\
-                 SELECT sample_id, frame[1].function AS leaf, value \
-                 FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY sample_id;\n\
-                 SELECT mapping_id, filename, build_id FROM pprof.main.mappings('data/native.pb.gz') \
-                 WHERE error IS NULL AND build_id IS NOT NULL ORDER BY mapping_id;"
-                    .to_string(),
+                format!(
+                    "{top};\n\
+                     SELECT sample_types, period, duration_nanos \
+                     FROM pprof.main.meta(from_base64('{cpu}')) WHERE error IS NULL;\n\
+                     SELECT sample_id, frame[1].function AS leaf, value \
+                     FROM pprof.main.stacks(from_base64('{cpu}')) WHERE error IS NULL \
+                     ORDER BY sample_id;\n\
+                     SELECT mapping_id, filename, build_id \
+                     FROM pprof.main.mappings(from_base64('{native}')) \
+                     WHERE error IS NULL AND build_id IS NOT NULL ORDER BY mapping_id;",
+                    top = crate::meta::EX_TOP_ACROSS_PROFILES.1,
+                    cpu = crate::meta::GO_CPU_B64,
+                    native = crate::meta::NATIVE_B64,
+                ),
             ),
             ("vgi.author".to_string(), "Query.Farm".to_string()),
             (
@@ -294,27 +299,25 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                 (
                     "vgi.example_queries".to_string(),
                     crate::meta::example_queries_json(&[
-                        (
-                            "Top self-time functions across a directory of CPU profiles.".into(),
-                            "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns \
-                             FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s \
-                             WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20"
-                                .into(),
-                        ),
+                        crate::meta::example_pair(crate::meta::EX_TOP_ACROSS_PROFILES),
                         (
                             "A heap profile's sample value types, sampling period, and duration."
                                 .into(),
-                            "SELECT sample_types, period, duration_nanos \
-                             FROM pprof.main.meta('data/go_heap.pb.gz') WHERE error IS NULL"
-                                .into(),
+                            format!(
+                                "SELECT sample_types, period, duration_nanos \
+                                 FROM pprof.main.meta(from_base64('{}')) WHERE error IS NULL",
+                                crate::meta::GO_HEAP_B64
+                            ),
                         ),
                         (
                             "Mappings that carry a build id (the binaries still to symbolize)."
                                 .into(),
-                            "SELECT mapping_id, filename, build_id \
-                             FROM pprof.main.mappings('data/native.pb.gz') \
-                             WHERE error IS NULL AND build_id IS NOT NULL"
-                                .into(),
+                            format!(
+                                "SELECT mapping_id, filename, build_id \
+                                 FROM pprof.main.mappings(from_base64('{}')) \
+                                 WHERE error IS NULL AND build_id IS NOT NULL",
+                                crate::meta::NATIVE_B64
+                            ),
                         ),
                         crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
                         crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),

@@ -20,14 +20,15 @@ community `vgi` extension; haybarn 1.5 cannot attach it.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'pprof' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.4.0');
+ATTACH 'pprof' (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.4.1');
 SET search_path = 'pprof.main';
 
--- top self-time functions across a directory of CPU profiles
+-- top self-time functions across a directory of your CPU profiles: the source
+-- may be a path, a glob, a list of paths, or inline BLOB bytes
 -- (value[2] is cpu/nanoseconds; value[1] is samples/count — see pprof.meta)
-SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns
-FROM glob('/profiles/*.pb.gz') f, pprof.stacks(f.path) s
-WHERE s.error IS NULL
+SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns
+FROM pprof.stacks('/profiles/*.pb.gz')
+WHERE error IS NULL
 GROUP BY 1 ORDER BY 2 DESC LIMIT 20;
 
 -- regression diff: candidate build vs baseline
@@ -60,23 +61,25 @@ Every [GitHub release](https://github.com/Query-farm/vgi-pprof/releases) ships a
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.4.0');
+ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'github-auto://Query-farm/vgi-pprof@v0.4.1');
 
--- Top self-time functions across a directory of CPU profiles.
-SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;
+-- Top self-time functions in a CPU profile. This one is a tiny sample Go CPU
+-- profile passed inline as bytes, so it runs anywhere; pass a file path, a glob
+-- such as '/profiles/*.pb.gz', or a list of paths for your own profiles.
+SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM pprof.main.stacks(from_base64('H4sIAAAAAAAA/yzQPU7rQBAH8Lcfjidr63kUIbAokOXKchFLW3EECgpqKoyJQkTiXWUT0U7HBRAtCCGgocgN0nMFKigouATaFc1/Zn4z1SgJDLmSIFCOUiUEZ3iAdPPyf5SA30W4vdvwfQSGRMRzoi2vokNWZsCQ5fRAvPR3aZkB9/AYgONumYHw8BRAYF1mID08B5AY1woYDvJBEVeqVsARciiG1U6tQKDKVTGsqlqBxCRPirSK9D8du3Zh5xOno86s+5UWnV3rpG974yad6S+cHjVrt2zmpmvnzfmsb1pr9XDRzvqxDx2Hdmr+7Nosr3Ts01sa7NKsjo2xWoXJtks30RDKeGqOiF43X/ff73sndPvzIU7D687o7VNa8RsAAP//CRIJN04BAAA=')) WHERE error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20;
 
 -- Look up which value slot holds CPU time for a Go CPU profile (and in what unit).
 SELECT value_index, sample_type, unit FROM pprof.main.sample_type_guide WHERE producer = 'Go' AND profile_kind = 'cpu' ORDER BY value_index;
 ```
 
-Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.0` to move to a newer release.
+Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github-auto://` needs an explicit release tag; change `@v0.4.1` to move to a newer release.
 
 ### Other ways to run it
 
 - **Docker** (the image bundles the worker; needs a container runtime):
 
   ```sql
-  ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pprof:0.4.0');
+  ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pprof:0.4.1');
   ```
 
 - **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-pprof/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.

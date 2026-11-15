@@ -11,16 +11,22 @@ use crate::arrow_build as ab;
 use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
-const EXECUTABLE_EXAMPLES: &str = r#"[
+const EXECUTABLE_EXAMPLES: &str = concat!(
+    r#"[
   {
     "description": "List the functions in a profile.",
-    "sql": "SELECT function_id, name, filename, start_line FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id LIMIT 10"
+    "sql": "SELECT function_id, name, filename, start_line FROM pprof.main.functions(from_base64('"#,
+    crate::meta::go_cpu_b64!(),
+    r#"')) WHERE error IS NULL ORDER BY function_id LIMIT 10"
   },
   {
     "description": "Which source files contribute the most symbols (functions) to a profile.",
-    "sql": "SELECT filename, count(*) AS fns FROM pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL GROUP BY filename ORDER BY fns DESC, filename LIMIT 5"
+    "sql": "SELECT filename, count(*) AS fns FROM pprof.main.functions(from_base64('"#,
+    crate::meta::go_cpu_b64!(),
+    r#"')) WHERE error IS NULL GROUP BY filename ORDER BY fns DESC, filename LIMIT 5"
   }
-]"#;
+]"#
+);
 
 pub struct Functions;
 
@@ -109,9 +115,13 @@ impl TableFunction for Functions {
         tags.push(("vgi.executable_examples".into(), EXECUTABLE_EXAMPLES.into()));
         let (examples, example_queries) = crate::meta::described_examples(vec![(
             "List the functions defined in a profile.".into(),
-            "SELECT function_id, name, filename, start_line FROM \
-             pprof.main.functions('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY function_id;"
-                .into(),
+            concat!(
+                "SELECT function_id, name, filename, start_line FROM \
+             pprof.main.functions(from_base64('",
+                crate::meta::go_cpu_b64!(),
+                "')) WHERE error IS NULL ORDER BY function_id;"
+            )
+            .into(),
         )]);
         tags.push(("vgi.example_queries".into(), example_queries));
         FunctionMetadata {

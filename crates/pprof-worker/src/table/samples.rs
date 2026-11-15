@@ -12,16 +12,25 @@ use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
 /// The guaranteed-runnable examples (`vgi.executable_examples`), including the
-/// composed [`crate::meta::EX_HOT_NATIVE_OFFSETS`] (offline: it reads the committed fixtures).
+/// composed [`crate::meta::EX_HOT_NATIVE_OFFSETS`] (offline: every profile is an
+/// inline BLOB fixture, so they run for any user).
 fn executable_examples() -> String {
     crate::meta::example_queries_json(&[
         crate::meta::example_pair((
             "Raw samples with their leaf location id.",
-            "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL",
+            concat!(
+                "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM pprof.main.samples(from_base64('",
+                crate::meta::go_cpu_b64!(),
+                "')) WHERE error IS NULL"
+            ),
         )),
         crate::meta::example_pair((
             "Inspect the per-sample labels (e.g. a heap profile's size_class tag) carried alongside the values.",
-            "SELECT sample_id, labels, value FROM pprof.main.samples('data/alloc.pb.gz') WHERE error IS NULL LIMIT 5",
+            concat!(
+                "SELECT sample_id, labels, value FROM pprof.main.samples(from_base64('",
+                crate::meta::alloc_b64!(),
+                "')) WHERE error IS NULL LIMIT 5"
+            ),
         )),
         crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),
     ])
@@ -107,9 +116,13 @@ impl TableFunction for Samples {
         let (examples, example_queries) = crate::meta::described_examples(vec![
             (
                 "Raw samples with their leaf location id.".into(),
-                "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
-             pprof.main.samples('data/go_cpu.pb.gz') WHERE error IS NULL;"
-                    .into(),
+                concat!(
+                    "SELECT sample_id, location_ids[1] AS leaf_loc, value FROM \
+             pprof.main.samples(from_base64('",
+                    crate::meta::go_cpu_b64!(),
+                    "')) WHERE error IS NULL;"
+                )
+                .into(),
             ),
             crate::meta::example_pair(crate::meta::EX_HOT_NATIVE_OFFSETS),
         ]);

@@ -14,16 +14,25 @@ use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
 /// The guaranteed-runnable examples (`vgi.executable_examples`), including the
-/// composed [`crate::meta::EX_INLINED_FRAMES`] (offline: it reads the committed fixtures).
+/// composed [`crate::meta::EX_INLINED_FRAMES`] (offline: every profile is an
+/// inline BLOB fixture, so they run for any user).
 fn executable_examples() -> String {
     crate::meta::example_queries_json(&[
         crate::meta::example_pair((
             "Locations with their line table (inlined frames).",
-            "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id LIMIT 10",
+            concat!(
+                "SELECT location_id, address, mapping_id, lines FROM pprof.main.locations(from_base64('",
+                crate::meta::go_cpu_b64!(),
+                "')) WHERE error IS NULL ORDER BY location_id LIMIT 10"
+            ),
         )),
         crate::meta::example_pair((
             "The most heavily inlined locations (longest line table = deepest inlining the compiler folded into one address).",
-            "SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5",
+            concat!(
+                "SELECT location_id, address, len(lines) AS inline_depth FROM pprof.main.locations(from_base64('",
+                crate::meta::go_cpu_b64!(),
+                "')) WHERE error IS NULL ORDER BY inline_depth DESC, location_id LIMIT 5"
+            ),
         )),
         crate::meta::example_pair(crate::meta::EX_INLINED_FRAMES),
     ])
@@ -114,9 +123,13 @@ impl TableFunction for Locations {
         let (examples, example_queries) = crate::meta::described_examples(vec![
             (
                 "Locations with their line table (inlined frames).".into(),
-                "SELECT location_id, address, mapping_id, lines FROM \
-             pprof.main.locations('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY location_id;"
-                    .into(),
+                concat!(
+                    "SELECT location_id, address, mapping_id, lines FROM \
+             pprof.main.locations(from_base64('",
+                    crate::meta::go_cpu_b64!(),
+                    "')) WHERE error IS NULL ORDER BY location_id;"
+                )
+                .into(),
             ),
             crate::meta::example_pair(crate::meta::EX_INLINED_FRAMES),
         ]);

@@ -15,16 +15,19 @@ use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
 /// The guaranteed-runnable examples (`vgi.executable_examples`), including the
-/// composed [`crate::meta::EX_DEFAULT_TYPE_BY_LEAF`] (offline: it reads the committed fixtures).
+/// composed [`crate::meta::EX_DEFAULT_TYPE_BY_LEAF`] (offline: every profile is an
+/// inline BLOB fixture, so they run for any user).
 fn executable_examples() -> String {
     crate::meta::example_queries_json(&[
-        crate::meta::example_pair((
-            "Top self-time functions across a directory of CPU profiles.",
-            "SELECT s.frame[1].function AS fn, sum(s.value[2]) AS cpu_ns FROM glob('/profiles/*.pb.gz') f, pprof.main.stacks(f.path) s WHERE s.error IS NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 20",
-        )),
+        crate::meta::example_pair(crate::meta::EX_TOP_ACROSS_PROFILES),
         crate::meta::example_pair((
             "Flatten one profile's stacks (leaf frame, values aligned to meta.sample_types).",
-            "SELECT sample_id, frame[1].function AS leaf, value FROM pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL",
+            concat!(
+                "SELECT sample_id, frame[1].function AS leaf, value \
+                 FROM pprof.main.stacks(from_base64('",
+                crate::meta::go_cpu_b64!(),
+                "')) WHERE error IS NULL"
+            ),
         )),
         crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
     ])
@@ -128,13 +131,13 @@ impl TableFunction for Stacks {
                 ),
             ),
             (
-                "Top self-time functions in a CPU profile (value[2] = cpu/nanoseconds), read \
-                 from a file path."
-                    .into(),
-                "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM \
-                 pprof.main.stacks('data/go_cpu.pb.gz') WHERE error IS NULL \
-                 GROUP BY 1 ORDER BY 2 DESC LIMIT 20;"
-                    .into(),
+                "Top self-time functions in a CPU profile (value[2] = cpu/nanoseconds).".into(),
+                format!(
+                    "SELECT frame[1].function AS fn, sum(value[2]) AS cpu_ns FROM \
+                     pprof.main.stacks(from_base64('{}')) WHERE error IS NULL \
+                     GROUP BY 1 ORDER BY 2 DESC LIMIT 20;",
+                    crate::meta::GO_CPU_B64
+                ),
             ),
             crate::meta::example_pair(crate::meta::EX_DEFAULT_TYPE_BY_LEAF),
         ]);

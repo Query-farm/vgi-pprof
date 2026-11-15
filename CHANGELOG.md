@@ -4,6 +4,22 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.1] - 2026-11-14
+
+### Fixed
+- Example queries now show real output for any user, not only inside this repo
+  (vgi-lint-check 2.7.0 VGI516/VGI913). They read `data/*.pb.gz` (repo-relative)
+  or the placeholder `/profiles/*.pb.gz`, so outside the repo they returned no
+  rows. Every function, schema, and catalog example — including the composed
+  ones and `vgi.executable_examples` — now decodes an inline base64 copy of the
+  committed fixture (`from_base64('...')`); a unit test pins the inline copies
+  byte-for-byte to `data/`. The cross-profile top-functions example now sums two
+  inline CPU profiles instead of a lateral `glob()` join, and the default-sample-type
+  composed example runs on the heap profile.
+- README: the quick-start example decodes an inline sample profile, and the
+  directory example passes the glob straight to `pprof.stacks(...)` (the
+  `glob() f, stacks(f.path)` lateral form does not work for table functions).
+
 ## [0.4.0] - 2026-11-12
 
 ### Changed

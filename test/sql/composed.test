@@ -4,8 +4,11 @@
 # The composed examples published in the catalog (crates/pprof-worker/src/meta.rs
 # EX_*): each combines two or more pprof tables. They are pinned here against the
 # committed fixtures so the rows their descriptions promise can't drift. The SQL
-# matches the published examples except that fixture paths are absolute
-# (${VGI_PPROF_DATA}) because the runner cd's into a staging dir.
+# matches the published examples except that the published ones decode inline
+# base64 copies of these fixtures (from_base64('...'), so they run for any user)
+# while these read the files by absolute path (${VGI_PPROF_DATA}) because the
+# runner cd's into a staging dir. meta.rs `fixtures_match_committed_files` pins
+# the inline copies byte-for-byte to data/.
 
 require-env VGI_PPROF_WORKER
 
@@ -18,13 +21,25 @@ statement ok
 ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION '${VGI_PPROF_WORKER}');
 
 # EX_DEFAULT_TYPE_BY_LEAF (meta + stacks): the value slot is found by name, so a
-# CPU profile totals `cpu` (value[2]) and a heap profile `inuse_space` (value[4]).
-query TTTI
-WITH m AS (SELECT file, default_sample_type AS sample_type, list_position([t.type FOR t IN sample_types], default_sample_type) AS slot FROM pprof.main.meta(['${VGI_PPROF_DATA}/go_cpu.pb.gz', '${VGI_PPROF_DATA}/go_heap.pb.gz']) WHERE error IS NULL) SELECT replace(s.file, '${VGI_PPROF_DATA}/', '') AS file, m.sample_type, s.frame[1].function AS fn, sum(s.value[m.slot]) AS total FROM pprof.main.stacks(['${VGI_PPROF_DATA}/go_cpu.pb.gz', '${VGI_PPROF_DATA}/go_heap.pb.gz']) s JOIN m USING (file) WHERE s.error IS NULL GROUP BY ALL ORDER BY 1, total DESC, fn
+# heap profile totals `inuse_space` (value[4]) and a CPU profile `cpu` (value[2]).
+query TTI
+WITH m AS (SELECT default_sample_type AS sample_type, list_position([t.type FOR t IN sample_types], default_sample_type) AS slot FROM pprof.main.meta('${VGI_PPROF_DATA}/go_heap.pb.gz') WHERE error IS NULL) SELECT m.sample_type, s.frame[1].function AS fn, sum(s.value[m.slot]) AS total FROM pprof.main.stacks('${VGI_PPROF_DATA}/go_heap.pb.gz') s, m WHERE s.error IS NULL GROUP BY ALL ORDER BY total DESC, fn
 ----
-go_cpu.pb.gz	cpu	main.hotLoop	30000000
-go_cpu.pb.gz	cpu	main.parse	5000000
-go_heap.pb.gz	inuse_space	main.makeBuf	409600
+inuse_space	main.makeBuf	409600
+
+query TTI
+WITH m AS (SELECT default_sample_type AS sample_type, list_position([t.type FOR t IN sample_types], default_sample_type) AS slot FROM pprof.main.meta('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL) SELECT m.sample_type, s.frame[1].function AS fn, sum(s.value[m.slot]) AS total FROM pprof.main.stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz') s, m WHERE s.error IS NULL GROUP BY ALL ORDER BY total DESC, fn
+----
+cpu	main.hotLoop	30000000
+cpu	main.parse	5000000
+
+# EX_TOP_ACROSS_PROFILES (stacks over two profiles): self time summed across a
+# baseline and a candidate CPU profile.
+query TI
+SELECT fn, sum(cpu_ns) AS cpu_ns FROM (SELECT frame[1].function AS fn, value[2] AS cpu_ns FROM pprof.main.stacks('${VGI_PPROF_DATA}/go_cpu.pb.gz') WHERE error IS NULL UNION ALL SELECT frame[1].function, value[2] FROM pprof.main.stacks('${VGI_PPROF_DATA}/go_cpu2.pb.gz') WHERE error IS NULL) GROUP BY fn ORDER BY cpu_ns DESC, fn LIMIT 20
+----
+main.hotLoop	120000000
+main.parse	10000000
 
 # EX_HOT_NATIVE_OFFSETS (samples + locations + mappings): leaf address minus the
 # mapping's memory_start (+ file_offset) is the offset a symbolizer resolves.

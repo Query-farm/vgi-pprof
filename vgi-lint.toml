@@ -1,11 +1,10 @@
 # vgi-lint-check configuration for the vgi-pprof worker.
 #
-# No rule is suppressed. Example queries and vgi.executable_examples decode
-# either an inline BLOB literal (a small base64-encoded pprof fixture) or a
-# committed fixture under data/ (run vgi-lint from the repo root), so the
-# example-EXECUTION rules (VGI901/902/906/907) and the scan-responds rule
-# (VGI911) materialize rows with no network — they run fully in the lint
-# sandbox against the live worker. The same
+# No rule is suppressed. Every example query and vgi.executable_examples entry
+# decodes an inline BLOB literal (a base64 copy of a committed data/ fixture), so
+# the example-EXECUTION rules (VGI901/902/906/907/913) and the scan-responds rule
+# (VGI911) materialize rows with no network and no files — for any user, from any
+# directory, not just the repo root (VGI516). The same
 # example queries are ALSO executed for real against the committed on-disk
 # fixtures by the haybarn SQLLogic E2E (test/sql/*.test) on every transport.
 #

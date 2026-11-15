@@ -11,16 +11,22 @@ use crate::arrow_build as ab;
 use crate::source::{self, DecodeUnit};
 use crate::table::{commented, schema_with_trailing, OneShot};
 
-const EXECUTABLE_EXAMPLES: &str = r#"[
+const EXECUTABLE_EXAMPLES: &str = concat!(
+    r#"[
   {
     "description": "Mappings with build ids (the addresses that still need symbolizing).",
-    "sql": "SELECT mapping_id, filename, build_id FROM pprof.main.mappings('data/native.pb.gz') WHERE error IS NULL AND build_id IS NOT NULL"
+    "sql": "SELECT mapping_id, filename, build_id FROM pprof.main.mappings(from_base64('"#,
+    crate::meta::native_b64!(),
+    r#"')) WHERE error IS NULL AND build_id IS NOT NULL"
   },
   {
     "description": "Every loaded binary/segment in a profile with its address range (memory_start .. memory_limit).",
-    "sql": "SELECT mapping_id, filename, memory_start, memory_limit FROM pprof.main.mappings('data/go_cpu.pb.gz') WHERE error IS NULL ORDER BY mapping_id"
+    "sql": "SELECT mapping_id, filename, memory_start, memory_limit FROM pprof.main.mappings(from_base64('"#,
+    crate::meta::go_cpu_b64!(),
+    r#"')) WHERE error IS NULL ORDER BY mapping_id"
   }
-]"#;
+]"#
+);
 
 pub struct Mappings;
 
