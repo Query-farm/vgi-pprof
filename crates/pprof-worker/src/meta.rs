@@ -188,7 +188,6 @@ macro_rules! go_cpu2_b64 {
         "H4sIAAAAAAAA/yzQvU7DQAwHcO4jjXuJFKtCEDGgKFOUoZFu4hEYGJiZCKEqFW3u1GvF6ocAVhBCiIWhb9CdV2CCgYGZHd2J5W/7Z09WEhhyJUGgHKVKCM7wEOnutx4l4HcRbu83/ACBIRHxnGjLq+iIlRkwZDk9Ei/9XVpmwD08BeC4V2YgPDwHEFiXGUgPLwEkxrUChoN8UMSVqhVwhByKYbVbKxCoclUMq6pWIDHJkyKtIr2jY9cu7HzidNSZdb/SorNrnfRtb9ykM/2l06Nm7ZbN3HTtvLmY9U1rrR4u2lk/9qHj0E7Nv92Y5bWOfXpLg12Z1YkxVqsw2XbpJhpCGU/NMdHr5uvh+33/lG5/PsRZeN05vX1KK/4CAAD//2pKKrROAQAA"
     };
 }
-pub(crate) use go_cpu2_b64;
 
 /// Base64 of `data/go_heap.pb.gz`: a small Go heap profile (multi-value:
 /// alloc/inuse × objects/space).

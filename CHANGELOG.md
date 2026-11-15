@@ -10,6 +10,10 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 - Docs link to upstream sources (vgi-lint VGI183): the catalog `vgi.doc_md` now
   ends with a "Sources and references" section linking google/pprof and its profile.proto schema.
 
+### Fixed
+- Build: drop the unused `pub(crate) use go_cpu2_b64;` re-export (the macro is only
+  used inside `meta.rs`), which failed `cargo clippy -D warnings` (`unused import`).
+
 ## [0.4.1] - 2026-11-14
 
 ### Fixed
