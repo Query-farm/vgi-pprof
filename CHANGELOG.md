@@ -4,6 +4,12 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] - 2026-11-14
+
+### Changed
+- Docs link to upstream sources (vgi-lint VGI183): the catalog `vgi.doc_md` now
+  ends with a "Sources and references" section linking google/pprof and its profile.proto schema.
+
 ## [0.4.1] - 2026-11-14
 
 ### Fixed

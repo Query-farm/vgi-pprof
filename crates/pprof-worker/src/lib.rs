@@ -120,7 +120,11 @@ fn catalog_metadata(name: &str) -> CatalogModel {
                  decoded independently — a **path** (which may be a glob like \
                  `/profiles/*.pb.gz`), a **list of paths**, or **inline profile bytes** — so a \
                  malformed or zero-byte profile produces a single **error row** (every data column \
-                 NULL) rather than failing the whole scan."
+                 NULL) rather than failing the whole scan.\n\n\
+                 ## Sources and references\n\n\
+                 - [google/pprof](https://github.com/google/pprof) — the pprof tool and format\n\
+                 - [profile.proto](https://github.com/google/pprof/blob/main/proto/profile.proto) — the protobuf schema this worker decodes\n\
+                 - [profile.proto README](https://github.com/google/pprof/blob/main/proto/README.md) — field semantics and conventions"
                     .to_string(),
             ),
             // Fixed agent-suitability suite run by `vgi-lint simulate`. The
