@@ -4,6 +4,11 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 0.4.3 (2026-11-16)
+
+- Bump the vgi Rust SDK to 0.51.1.
+- CI: a release reuses the passing CI run of its commit; container images build on release tags only.
+
 ## [0.4.2] - 2026-11-14
 
 ### Changed
