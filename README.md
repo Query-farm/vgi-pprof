@@ -79,7 +79,7 @@ Prebuilt binaries cover macOS (Apple silicon), Linux (x86-64 and arm64). `github
 - **Docker** (the image bundles the worker; needs a container runtime):
 
   ```sql
-  ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pprof:0.5.0');
+  ATTACH 'pprof' AS pprof (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pprof:0.5.1');
   ```
 
 - **Manual download.** Download the archive for your platform from the [releases page](https://github.com/Query-farm/vgi-pprof/releases), verify it against its `.sha256` file (a cosign `.cosign.bundle` is published alongside), unpack it, and set `LOCATION` to the path of the extracted worker executable.

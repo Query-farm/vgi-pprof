@@ -4,6 +4,10 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 0.5.1 (2026-11-25)
+
+- CI: grant `checks: write` to the cargo-audit job (and its release/image callers) so rustsec/audit-check can post its check-run; the new unmaintained-crate advisories (chrono RUSTSEC-2026-0543, humantime RUSTSEC-2026-0542) made it report and fail on the read-only token, blocking the 0.5.0 release.
+
 ## 0.5.0 (2026-11-25)
 
 - VGI protocol 3.4: `vgi` 0.53.2, `vgi-rpc` 0.33.1 (Orchard hosted mode; `blob-vendor` on the native build). Requires the 3.4 community `vgi` extension (haybarn 2.0.1).
