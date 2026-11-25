@@ -4,6 +4,11 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 0.5.0 (2026-11-25)
+
+- VGI protocol 3.4: `vgi` 0.53.2, `vgi-rpc` 0.33.1 (Orchard hosted mode; `blob-vendor` on the native build). Requires the 3.4 community `vgi` extension (haybarn 2.0.1).
+- SQL tests run on haybarn-unittest 2.0.1rc3. Dockerfile HEALTHCHECK probes `HEAD /health` (hosted mode answers anonymous GET with 401).
+
 ## 0.4.3 (2026-11-16)
 
 - Bump the vgi Rust SDK to 0.51.1.
@@ -38,7 +43,7 @@ All notable changes to `vgi-pprof` are documented here. The format follows
 ## [0.4.0] - 2026-11-12
 
 ### Changed
-- Ported to VGI protocol 3.3 (vgi.v3 3.3.0): vgi 0.51.0, vgi-rpc 0.32.4.
+- Ported to VGI protocol 3.4 (vgi.v3 3.3.0): vgi 0.53.2, vgi-rpc 0.32.4.
   Requires the current community `vgi` extension (3.3); 3.2 extensions are
   incompatible. No worker-visible change (the worker has no catalog tables).
 
